@@ -12,6 +12,8 @@ def createStore(rootStore, pathSegments):
 def getStore(rootStore, pathSegments):
     """
     Gets a substore under the given root store with the given path segments.
+
+    Raises ``axiom.errors.ItemNotFound`` if no such store exists.
     """
     storePath = rootStore.filesdir
     for segment in pathSegments:
