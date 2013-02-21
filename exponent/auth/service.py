@@ -1,25 +1,37 @@
 """
 A realm that tries to adapt users
 """
+from axiom import attributes, item
+from twisted.application import service
 from twisted.cred import portal
+from twisted.cred.checkers import ICredentialsChecker
 from twisted.protocols import amp
 from zope import interface
+
+
+@interface.implementer(service.IService)
+class AuthenticationService(item.Item):
+    _dummy = attributes.inmemory()
+
+    def startService(self):
+        realm = Realm()
+        checkers = list(self.store.powerupsFor(ICredentialsChecker))
+        portal = portal.Portal(realm, checkers)
+
 
 
 @interface.implementer(portal.IRealm)
 class Realm(object):
     """
-    The realm for the IGL API.
+    A realm that produces box receivers for users.
     """
-    interface.implements(portal.IRealm)
-
     def __init__(self, getUser):
         self._getUser = getUser
 
 
     def requestAvatar(self, uid, mind, *interfaces):
         """
-        Create IGL API avatars for any IBoxReceiver request.
+        Attempts to get a lock on the user, then adapts it to ``IBoxReceiver``.
         """
         if amp.IBoxReceiver not in interfaces:
             raise NotImplementedError()

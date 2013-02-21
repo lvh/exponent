@@ -1,5 +1,5 @@
 from axiom import store
-from exponent.auth import realm, user
+from exponent.auth import service, user
 from twisted.cred import portal
 from twisted.internet import defer
 from twisted.protocols import amp
@@ -11,7 +11,7 @@ class RealmTests(unittest.TestCase):
         """
         Tests that the realm implements the ``IRealm`` interface.
         """
-        self.assertTrue(portal.IRealm.implementedBy(realm.Realm))
+        self.assertTrue(portal.IRealm.implementedBy(service.Realm))
 
 
     def test_badInterface(self):
@@ -19,16 +19,15 @@ class RealmTests(unittest.TestCase):
         Tests that the realm doesn't work without IBoxReceiver as a target
         interface.
         """
-        requestAvatar = realm.Realm(None).requestAvatar
+        requestAvatar = service.Realm(None).requestAvatar
         self.assertRaises(NotImplementedError, requestAvatar, "", None, None)
 
 
     def test_requestAvatar(self):
         """
-        Creates an in-memory user with a stub ``IBoxReceiver``
-        powerup, and attempts to request an avatar for that user.
+        Creates an in-memory user with a stub ``IBoxReceiver`` powerup, and
+        attempts to request an avatar for that user.
         """
-        # TODO: remove store as soon as Axiom supports storeless __conform__
         testUser = user.User(store=store.Store(), uid="test")
 
         def getUser(uid):
@@ -38,7 +37,7 @@ class RealmTests(unittest.TestCase):
         boxReceiver = object()
         testUser.inMemoryPowerUp(boxReceiver, amp.IBoxReceiver)
 
-        testRealm = realm.Realm(getUser)
+        testRealm = service.Realm(getUser)
         d = testRealm.requestAvatar("test", None, amp.IBoxReceiver)
 
         @d.addCallback
