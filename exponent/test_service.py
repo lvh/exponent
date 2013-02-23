@@ -41,3 +41,15 @@ class FakeEndpoint(item.Item):
         Remembers the factory that was being listened with.
         """
         self.factory = factory
+
+
+class FactoryTests(unittest.TestCase):
+    def test_buildProtocol(self):
+        """
+        Tests that the factory builds protocols that use the factory's box
+        receiver.
+        """
+        boxReceiver = object()
+        factory = service.Factory(boxReceiver)
+        protocol = factory.buildProtocol(object())
+        self.assertIdentical(protocol.boxReceiver, boxReceiver)
