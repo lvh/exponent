@@ -10,5 +10,14 @@ class User(item.Item):
 
     @classmethod
     def withUid(cls, rootStore, uid):
-        userStore = substore.getStore(rootStore, ["users", uid])
-        return userStore.findUnique(cls)
+        return cls._getStore(rootStore, uid).findUnique(cls)
+
+
+    @classmethod
+    def _getStore(cls, rootStore, uid):
+        return substore.getStore(rootStore, ["users", uid])
+
+
+    @classmethod
+    def createStore(cls, rootStore, uid):
+        return substore.createStore(rootStore, ["users", uid])
