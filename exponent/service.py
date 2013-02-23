@@ -1,8 +1,11 @@
 from axiom import attributes, item
+from twisted.application import service
 from twisted.internet import protocol
 from twisted.protocols import amp
+from zope import interface
 
 
+@interface.implementer(service.IService)
 class Service(item.Item):
     """
     A service that adapts its store to a box receiver and then serves that
