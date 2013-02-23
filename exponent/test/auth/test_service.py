@@ -1,3 +1,6 @@
+"""
+Tests for the core authentication services.
+"""
 from axiom import store
 from exponent.auth import service, user
 from twisted.cred import portal
