@@ -15,7 +15,7 @@ class UserTests(unittest.TestCase):
         """
         Tests that you can get a user by uid.
         """
-        testUser = user.User.withUid(self.rootStore, "test")
+        testUser = user.User.findUnique(self.rootStore, "test")
         self.assertEqual(testUser, self.user)
         self.assertEqual(testUser.store, self.userStore)
 
@@ -25,6 +25,6 @@ class UserTests(unittest.TestCase):
         Tests that you can get an appropriate exception when you try
         to get a user that doesn't exist.
         """
-        getBogusUser = lambda: user.User.withUid(self.rootStore, "bogus")
+        getBogusUser = lambda: user.User.findUnique(self.rootStore, "bogus")
         self.assertRaises(errors.ItemNotFound, getBogusUser)
 
