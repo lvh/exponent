@@ -34,6 +34,7 @@ class SubstoreTests(unittest.TestCase):
         self.assertRaises(errors.ItemNotFound, getBogus)
 
 
+
 class WithSubstoreMixinTests(unittest.TestCase):
     def setUp(self):
         self.rootStore = store.Store(self.mktemp())
