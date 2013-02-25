@@ -1,4 +1,4 @@
-from axiom import errors, store
+from axiom import attributes, errors, item, store
 from exponent import substore
 from twisted.trial import unittest
 
@@ -32,3 +32,30 @@ class SubstoreTests(unittest.TestCase):
         """
         getBogus = lambda: substore.getStore(self.rootStore, ["BOGUS"])
         self.assertRaises(errors.ItemNotFound, getBogus)
+
+
+class WithSubstoreMixinTests(unittest.TestCase):
+    def setUp(self):
+        self.rootStore = store.Store(self.mktemp())
+
+    def test_createAndGetSubstore(self):
+        createdStore = ItemWithSubstore.createStore(self.rootStore, "a", "b", "c")
+        gotStore = ItemWithSubstore.getStore(self.rootStore, "a", "b", "c")
+        self.assertEqual(createdStore.dbdir, gotStore.dbdir)
+
+        segments = [ItemWithSubstore.typeName, "a", "b", "c"]
+        indirectlyGotStore = substore.getStore(self.rootStore, segments)
+        self.assertEqual(gotStore.dbdir, indirectlyGotStore.dbdir)
+
+
+    def test_findUnique(self):
+        createdStore = ItemWithSubstore.createStore(self.rootStore, "a")
+        createdItem = ItemWithSubstore(store=createdStore)
+        foundItem = ItemWithSubstore.findUnique(self.rootStore, "a")
+        self.assertIdentical(createdItem, foundItem)
+
+
+
+@substore.withSubstores
+class ItemWithSubstore(item.Item):
+    dummy = attributes.boolean()
