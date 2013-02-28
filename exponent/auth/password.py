@@ -2,7 +2,7 @@
 Classic username and password authentication.
 """
 from axiom import attributes, item, errors as ae
-from exponent import errors as ee, user
+from exponent.auth import errors as ee, user
 from twisted.cred import checkers, credentials, error as ce
 from twisted.protocols import amp
 from twisted.python import log
@@ -11,17 +11,17 @@ from zope import interface
 
 
 @interface.implementer(checkers.ICredentialsChecker)
-class CredentialsChecker(object):
+class CredentialsChecker(item.Item):
     """
     Checks the user's username and password.
     """
     credentialInterfaces = [credentials.IUsernamePassword]
-    powerupInterfaces = [credentials.ICredentialsChecker]
+    powerupInterfaces = [checkers.ICredentialsChecker]
 
     def requestAvatarId(self, loginCredentials):
         username = loginCredentials.username.decode("utf-8")
         try:
-            thisUser = self._userWithUsername(username)
+            thisUser = self._getUserByUsername(username)
         except ae.ItemNotFound:
             log.msg("unknown username: {}".format(loginCredentials.username))
             raise ce.UnauthorizedLogin()
@@ -35,10 +35,13 @@ class CredentialsChecker(object):
         return d.addCallback(lambda _result: user.uid)
 
 
-    def _userWithUsername(self, username):
+    def _getUserByUsername(self, username):
+        """
+        Gets a user by username.
+        """
         UUR = UidUsernameReference
-        uid = self._rootStore.findUnique(UUR, UUR.username == username).uid
-        return user.User.withUid(self._rootStore, uid)
+        uid = self.store.findUnique(UUR, UUR.username == username).uid
+        return user.User.withUid(self.store, uid)
 
 
 
@@ -93,8 +96,3 @@ class PasswordAuthenticationLocator(object):
     @LoginUsernamePassword.responder
     def register(self, username, password):
         pass
-
-
-
-def install(rootStore):
-    pass

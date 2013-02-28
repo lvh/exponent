@@ -27,4 +27,3 @@ class UserTests(unittest.TestCase):
         """
         getBogusUser = lambda: user.User.findUnique(self.rootStore, "bogus")
         self.assertRaises(errors.ItemNotFound, getBogusUser)
-

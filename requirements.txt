@@ -1,4 +1,10 @@
 twisted
+
+# AMP
+txampext
+
+# Axiom
 epsilon
 pysqlite
 axiom
+maxims
