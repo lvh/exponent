@@ -1,7 +1,12 @@
 from distutils.core import setup
 
+import re
+versionLine = open("exponent/_version.py", "rt").read()
+match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", versionLine, re.M)
+versionString = match.group(1)
+
 setup(name='exponent',
-      version='20121001',
+      version=versionString,
       description='An experimental toolkit for building applications with a fractal architecture',
       url='https://github.com/lvh/exponent',
 
