@@ -47,13 +47,9 @@ class CredentialsChecker(item.Item):
             log.msg("unknown username: {}".format(loginCredentials.username))
             raise ce.UnauthorizedLogin("Unknown username")
 
-        try:
-            storedCredentials = credentials.IUsernameHashedPassword(thisUser)
-        except TypeError:  # no stored password
-            raise ce.UnauthorizedLogin("Missing password")
 
-        password = loginCredentials.password
-        isCorrect = yield storedCredentials.checkPassword(password)
+        stored = credentials.IUsernameHashedPassword(thisUser)
+        isCorrect = yield stored.checkPassword(loginCredentials.password)
         if isCorrect:
             defer.returnValue(thisUser.uid)
         else:
