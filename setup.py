@@ -22,4 +22,3 @@ setup(name='exponent',
         "License :: OSI Approved :: ISC License (ISCL)",
         ]
 )
-
