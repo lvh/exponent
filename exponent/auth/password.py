@@ -28,10 +28,6 @@ class _UidUsernameReference(item.Item):
     uid = attributes.bytes(allowNone=False, indexed=True)
     username = attributes.text(allowNone=False, indexed=True)
 
-    @classmethod
-    def forUsername(cls, store, username):
-        return store.findUnique(cls, cls.username == username).uid
-
 
 
 @interface.implementer(checkers.ICredentialsChecker)
