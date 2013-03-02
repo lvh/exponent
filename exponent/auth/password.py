@@ -15,8 +15,8 @@ def _getUser(rootStore, username):
     """
     Gets a user by username.
     """
-    UUR = _UidUsernameReference
-    uid = rootStore.findUnique(UUR, UUR.username == username).uid
+    forThisUsername = _UidUsernameReference.username == username
+    uid = rootStore.findUnique(_UidUsernameReference, forThisUsername).uid
     return user.User.withUid(rootStore, uid)
 
 
