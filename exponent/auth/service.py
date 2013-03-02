@@ -1,6 +1,3 @@
-"""
-A realm that tries to adapt users
-"""
 import functools
 
 from exponent.auth import user
@@ -19,6 +16,9 @@ def _getUserByUid(rootStore, uid):
 
 
 class AuthenticationResponderLocator(object):
+    """
+    A base class for responder locators that deal with authentication.
+    """
     credentialInterfaces = []
 
     def __init__(self, store, _getUserByUid=_getUserByUid):
