@@ -4,10 +4,34 @@ Classic username and password authentication.
 from axiom import attributes, item, errors as ae
 from exponent.auth import errors as ee, user
 from twisted.cred import checkers, credentials, error as ce
+from twisted.internet import defer
 from twisted.protocols import amp
 from twisted.python import log
 from txampext import axiomtypes, exposed
 from zope import interface
+
+
+def _getUser(rootStore, username):
+    """
+    Gets a user by username.
+    """
+    UUR = _UidUsernameReference
+    uid = rootStore.findUnique(UUR, UUR.username == username).uid
+    return user.User.withUid(rootStore, uid)
+
+
+
+class _UidUsernameReference(item.Item):
+    """
+    A reference to match a uid to a username.
+    """
+    uid = attributes.bytes(allowNone=False, indexed=True)
+    username = attributes.text(allowNone=False, indexed=True)
+
+    @classmethod
+    def forUsername(cls, store, username):
+        return store.findUnique(cls, cls.username == username).uid
+
 
 
 @interface.implementer(checkers.ICredentialsChecker)
@@ -18,43 +42,26 @@ class CredentialsChecker(item.Item):
     credentialInterfaces = [credentials.IUsernamePassword]
     powerupInterfaces = [checkers.ICredentialsChecker]
 
-    def requestAvatarId(self, loginCredentials):
+    @defer.inlineCallbacks
+    def requestAvatarId(self, loginCredentials, _getUser=_getUser):
         username = loginCredentials.username.decode("utf-8")
         try:
-            thisUser = self._getUserByUsername(username)
+            thisUser = yield _getUser(self.store, username)
         except ae.ItemNotFound:
             log.msg("unknown username: {}".format(loginCredentials.username))
-            raise ce.UnauthorizedLogin()
+            raise ce.UnauthorizedLogin("Unknown username")
 
         try:
             storedCredentials = credentials.IUsernameHashedPassword(thisUser)
         except TypeError:  # no stored password
-            raise ce.UnauthorizedLogin()
+            raise ce.UnauthorizedLogin("Missing password")
 
-        d = storedCredentials.checkPassword(loginCredentials.password)
-        return d.addCallback(lambda _result: user.uid)
-
-
-    def _getUserByUsername(self, username):
-        """
-        Gets a user by username.
-        """
-        UUR = UidUsernameReference
-        uid = self.store.findUnique(UUR, UUR.username == username).uid
-        return user.User.withUid(self.store, uid)
-
-
-
-class UidUsernameReference(item.Item):
-    """
-    A reference to match a uid to a username.
-    """
-    uid = attributes.bytes(allowNone=False, indexed=True)
-    username = attributes.text(allowNone=False, indexed=True)
-
-    @classmethod
-    def forUsername(cls, store, username):
-        return store.findUnique(cls, cls.username == username).uid
+        password = loginCredentials.password
+        isCorrect = yield storedCredentials.checkPassword(password)
+        if isCorrect:
+            defer.returnValue(thisUser.uid)
+        else:
+            raise ce.UnauthorizedLogin("Wrong password")
 
 
 

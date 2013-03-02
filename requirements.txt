@@ -7,4 +7,9 @@ txampext
 epsilon
 pysqlite
 axiom
-maxims
+
+# Axiom extensions
+maxims>=0.0.2
+
+# Passwords
+txscrypt>=0.0.1
