@@ -1,12 +1,13 @@
 """
 Tests for the core authentication services.
 """
-from axiom import store
+from axiom import attributes, item, store
 from exponent.auth import service, user
-from twisted.cred import portal
+from twisted.cred import checkers, credentials, error as ce, portal
 from twisted.internet import defer
 from twisted.protocols import amp
 from twisted.trial import unittest
+from zope import interface
 
 
 class RealmTests(unittest.TestCase):
@@ -59,3 +60,52 @@ class RealmTests(unittest.TestCase):
             logout()
 
         return d
+
+
+class AuthenticationResponderLocatorTests(unittest.TestCase):
+    def setUp(self):
+        self.store = store.Store()
+        self.user = user.User(store=store.Store(), uid="uid")
+        self.avatar = object()
+        self.user.inMemoryPowerUp(self.avatar, amp.IBoxReceiver)
+
+
+    @defer.inlineCallbacks
+    def test_hasWorkingPortal(self):
+        """
+        Simple test to verify that the superclass produces a working portal.
+        """
+        checker = _TestChecker()
+        self.store.inMemoryPowerUp(checker, checkers.ICredentialsChecker)
+
+        def _getUserByUid(rootStore, uid):
+            self.assertIdentical(rootStore, self.store)
+            self.assertEqual(uid, "uid")
+            return defer.succeed(self.user)
+
+        login = _TestResponder(self.store, _getUserByUid).portal.login
+        creds = credentials.UsernamePassword("username", "password")
+        iface, avatar, logout = yield login(creds, None, amp.IBoxReceiver)
+        self.assertIdentical(iface, amp.IBoxReceiver)
+        self.assertIdentical(self.avatar, avatar)
+        logout()
+
+
+
+class _TestResponder(service.AuthenticationResponderLocator):
+    """
+    An authentication responder locator for testing.
+    """
+    credentialInterfaces = [credentials.IUsernamePassword]
+
+
+
+@interface.implementer(checkers.ICredentialsChecker)
+class _TestChecker(object):
+    """
+    A ``IUsernamePassword`` checker for testing.
+    """
+    credentialInterfaces = [credentials.IUsernamePassword]
+
+    def requestAvatarId(self, credentials):
+        return "uid"

@@ -1,22 +1,39 @@
 """
 A realm that tries to adapt users
 """
-from axiom import attributes, item
-from twisted.application import service
-from twisted.cred import portal
-from twisted.cred.checkers import ICredentialsChecker
+import functools
+
+from exponent.auth import user
+from twisted.cred import checkers, portal
+from twisted.internet import defer
 from twisted.protocols import amp
 from zope import interface
 
 
-@interface.implementer(service.IService)
-class AuthenticationService(item.Item):
-    _dummy = attributes.inmemory()
+def _getUserByUid(rootStore, uid):
+    """
+    Gets a user by uid.
+    """
+    return defer.succeed(user.User.findUnique(rootStore, uid))
 
-    def startService(self):
-        realm = Realm()
-        checkers = list(self.store.powerupsFor(ICredentialsChecker))
-        portal = portal.Portal(realm, checkers)
+
+
+class AuthenticationResponderLocator(object):
+    credentialInterfaces = []
+
+    def __init__(self, store, _getUserByUid=_getUserByUid):
+        """
+        Initializes an authentication responder locator.
+
+        :param store: The root store.
+        :param _getUserByUid: Binary callable that takes a store and a user
+        uid, and returns a deferred User. This will be used by the realm to
+        get users.
+        """
+        self.store = store
+        realm = Realm(functools.partial(_getUserByUid, store))
+        storeCheckers = store.powerupsFor(checkers.ICredentialsChecker)
+        self.portal = portal.Portal(realm, storeCheckers)
 
 
 
@@ -25,8 +42,8 @@ class Realm(object):
     """
     A realm that produces box receivers for users.
     """
-    def __init__(self, getUser):
-        self._getUser = getUser
+    def __init__(self, getUserByUid):
+        self._getUser = getUserByUid
 
 
     def requestAvatar(self, uid, mind, *interfaces):
@@ -35,7 +52,7 @@ class Realm(object):
         """
         if amp.IBoxReceiver not in interfaces:
             raise NotImplementedError()
-        
+
         return self._getUser(uid).addCallback(_gotUser)
 
 

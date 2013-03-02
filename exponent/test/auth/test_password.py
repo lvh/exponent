@@ -73,4 +73,3 @@ class FakeUsernameHashedPassword(object):
 
     def checkPassword(self, password):
         return self.password == password
-
