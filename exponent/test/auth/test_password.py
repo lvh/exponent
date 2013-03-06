@@ -6,6 +6,41 @@ from twisted.trial import unittest
 from zope import interface
 
 
+class GetUserTests(unittest.TestCase):
+    """
+    Tests for getting a user by username.
+    """
+    def setUp(self):
+        self.rootStore = store.Store(self.mktemp())
+        password._UidUsernameReference(store=self.rootStore,
+            uid="uid", username=u"username")
+        userStore = user.User.createStore(self.rootStore, "uid")
+        user.User(store=userStore, uid="uid")
+
+
+    def _getUser(self, username):
+        """
+        Like regular ``_getUser``, but with this test case's store partially
+        applied.
+        """
+        return password._getUser(self.rootStore, username)
+
+
+    def test_getExistingUser(self):
+        """
+        Attempts to retrieve an existing user by username.
+        """
+        self.assertEqual(self._getUser(u"username").uid, "uid")
+
+
+    def test_getNonexistantUser(self):
+        """
+        Attempts to retrieve a user that doesn't exist.
+        """
+        self.assertRaises(ae.ItemNotFound, self._getUser, u"BOGUS")
+
+
+
 class CredentialsCheckerTests(unittest.TestCase):
     """
     Test cases for the password credentials checker.

@@ -17,7 +17,7 @@ def _getUser(rootStore, username):
     """
     forThisUsername = _UidUsernameReference.username == username
     uid = rootStore.findUnique(_UidUsernameReference, forThisUsername).uid
-    return user.User.withUid(rootStore, uid)
+    return user.User.findUnique(rootStore, uid)
 
 
 
