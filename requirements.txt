@@ -1,7 +1,7 @@
 twisted
 
 # AMP
-txampext
+txampext>=0.0.2
 
 # Axiom
 epsilon

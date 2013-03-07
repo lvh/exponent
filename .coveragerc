@@ -1,6 +1,8 @@
 [run]
 branch = True
-source = exponent
+source =
+    exponent
+    docs/tutorial/todo
 
 [report]
 exclude_lines =
