@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 import re
 versionLine = open("exponent/_version.py", "rt").read()
@@ -15,7 +15,8 @@ setup(name='exponent',
       author_email='_@lvh.cc',
 
       packages=["exponent", "exponent.test"],
-
+      setup_requires=['setuptools_trial'],
+      test_suite="exponent.test",
       zip_safe=True,
 
       license='ISC',
