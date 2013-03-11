@@ -7,7 +7,8 @@ versionString = match.group(1)
 
 setup(name='exponent',
       version=versionString,
-      description='An experimental toolkit for building applications with a fractal architecture',
+      description='An experimental toolkit for applications with a fractal architecture',
+      long_description='An experimental toolkit for building applications with a fractal architecture, using Twisted, Axiom (object serialization wtih SQLite), AMP (an RPC protocol) and Foolscap (an object-capability library for distributed systems).',
       url='https://github.com/lvh/exponent',
 
       author='Laurens Van Houtven',
