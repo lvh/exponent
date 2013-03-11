@@ -16,6 +16,8 @@ setup(name='exponent',
 
       packages=["exponent", "exponent.test"],
 
+      zip_safe=True,
+
       license='ISC',
       classifiers=[
         "Development Status :: 3 - Alpha",
