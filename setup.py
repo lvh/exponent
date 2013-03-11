@@ -21,5 +21,8 @@ setup(name='exponent',
         "Development Status :: 3 - Alpha",
         "Framework :: Twisted",
         "License :: OSI Approved :: ISC License (ISCL)",
+        "Programming Language :: Python :: 2 :: Only",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7"
         ]
 )
