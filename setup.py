@@ -19,6 +19,7 @@ setup(name='exponent',
       zip_safe=True,
 
       license='ISC',
+      keywords="fractal-architectures twisted axiom",
       classifiers=[
         "Development Status :: 3 - Alpha",
         "Framework :: Twisted",
