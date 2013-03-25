@@ -14,14 +14,14 @@ class SubstoreTests(unittest.TestCase):
         stored on the filesystem and in the same place, and that they both
         have the test's root store as a parent.
         """
-        segments = "a", "b", "c"
-        createdStore = substore.createStore(self.rootStore, segments)
-        retrievedStore = substore.getStore(self.rootStore, segments)
+        segments = ["a", "b", "c"]
+        created = substore.createChildStore(self.rootStore, segments)
+        retrieved = substore.getChildStore(self.rootStore, segments)
 
-        self.assertNotIdentical(createdStore.dbdir, None)
-        self.assertEqual(createdStore.dbdir, retrievedStore.dbdir)
+        self.assertNotIdentical(created.dbdir, None)
+        self.assertEqual(created.dbdir, retrieved.dbdir)
 
-        for s in [createdStore, retrievedStore]:
+        for s in [created, retrieved]:
             self.assertEqual(s.parent, self.rootStore)
 
 
@@ -30,33 +30,33 @@ class SubstoreTests(unittest.TestCase):
         Tests that an appropriate error is raised when trying to open a
         substore that doesn't exist.
         """
-        getBogus = lambda: substore.getStore(self.rootStore, ["BOGUS"])
+        getBogus = lambda: substore.getChildStore(self.rootStore, ["BOGUS"])
         self.assertRaises(errors.ItemNotFound, getBogus)
 
 
 
-class WithSubstoreMixinTests(unittest.TestCase):
+class ChildMixinTests(unittest.TestCase):
     def setUp(self):
         self.rootStore = store.Store(self.mktemp())
 
-    def test_createAndGetSubstore(self):
-        createdStore = ItemWithSubstore.createStore(self.rootStore, "a", "b", "c")
-        gotStore = ItemWithSubstore.getStore(self.rootStore, "a", "b", "c")
-        self.assertEqual(createdStore.dbdir, gotStore.dbdir)
 
-        segments = [ItemWithSubstore.typeName, "a", "b", "c"]
-        indirectlyGotStore = substore.getStore(self.rootStore, segments)
-        self.assertEqual(gotStore.dbdir, indirectlyGotStore.dbdir)
+    def test_createAndGetSubstore(self):
+        created = Child.createChildStore(self.rootStore, ["a", "b", "c"])
+        retrieved = Child.getChildStore(self.rootStore, ["a", "b", "c"])
+        self.assertEqual(created.dbdir, retrieved.dbdir)
+
+        segs = [Child.typeName, "a", "b", "c"]
+        indirectlyRetrieved = substore.getChildStore(self.rootStore, segs)
+        self.assertEqual(retrieved.dbdir, indirectlyRetrieved.dbdir)
 
 
     def test_findUnique(self):
-        createdStore = ItemWithSubstore.createStore(self.rootStore, "a")
-        createdItem = ItemWithSubstore(store=createdStore)
-        foundItem = ItemWithSubstore.findUnique(self.rootStore, "a")
+        childStore = Child.createChildStore(self.rootStore, ["a"])
+        createdItem = Child(store=childStore)
+        foundItem = Child.findUniqueChild(self.rootStore, ["a"])
         self.assertIdentical(createdItem, foundItem)
 
 
 
-@substore.withSubstores
-class ItemWithSubstore(item.Item):
-    dummy = attributes.boolean()
+class Child(item.Item, substore.ChildMixin):
+    _dummy = attributes.boolean()

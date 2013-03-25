@@ -1,8 +1,10 @@
+"""
+Helpers for substores and items that are first-class children of root stores.
+"""
 from axiom import substore
-from functools import partial
 
 
-def createStore(rootStore, pathSegments):
+def createChildStore(rootStore, pathSegments):
     """
     Creates amd returns substore under the given root store with the given
     path segments.
@@ -10,9 +12,9 @@ def createStore(rootStore, pathSegments):
     return substore.SubStore.createNew(rootStore, pathSegments).open()
 
 
-def getStore(rootStore, pathSegments):
+def getChildStore(rootStore, pathSegments):
     """
-    Gets a substore under the given root store with the given path segments.
+    Gets a child store under the root store with these path segments.
 
     Raises ``axiom.errors.ItemNotFound`` if no such store exists.
     """
@@ -23,35 +25,33 @@ def getStore(rootStore, pathSegments):
     return rootStore.findUnique(substore.SubStore, withThisPath).open()
 
 
-def withSubstores(cls):
+class ChildMixin(object):
     """
-    A class decorator for classes to have ``createStore`` and ``getStore``,
-    prefixed with their type name, and adds a convenience function
-    ``findUnique`` that finds a unique instance of ``cls`` in a substore,
-    given by root store and path segments.
-
-    Returns the class itself (with the new methods).
+    A mixin for Item classes that are first-class children of a root store.
     """
-    cls.createStore = partial(_prefixedWithTypeName, cls, createStore)
-    cls.getStore = partial(_prefixedWithTypeName, cls, getStore)
-    cls.findUnique = partial(_findUnique, cls)
-    return cls
+    @classmethod
+    def createChildStore(cls, rootStore, pathSegments):
+        """
+        Creates a child store under the root store with these path segments.
+        """
+        pathSegments = [cls.typeName] + list(pathSegments)
+        return createChildStore(rootStore, pathSegments)
 
 
-def _prefixedWithTypeName(cls, f, rootStore, *pathSegments):
-    """
-    Calls ``f`` with the given ``rootStore`` and the given ``pathSegments``,
-    prefixed with the class' type name.
-    """
-    return f(rootStore, (cls.typeName,) + pathSegments)
+    @classmethod
+    def getChildStore(cls, rootStore, pathSegments):
+        """
+        Gets a child store under the root store with these path segments.
+        """
+        pathSegments = [cls.typeName] + list(pathSegments)
+        return getChildStore(rootStore, pathSegments)
 
 
-def _findUnique(cls, rootStore, *pathSegments):
-    """
-    Finds a unique instance of ``cls`` in a substore of ``rootStore`` with the
-    given path segments.
-
-    This assumes the class has the ``getStore`` class method provided by the
-    decorator, and is not intended for external use.
-    """
-    return cls.getStore(rootStore, *pathSegments).findUnique(cls)
+    @classmethod
+    def findUniqueChild(cls, rootStore, pathSegments):
+        """
+        Finds a unique instance of ``cls`` in a child store of ``rootStore``
+        with the given path segments.
+        """
+        childStore = cls.getChildStore(rootStore, pathSegments)
+        return childStore.findUnique(cls)
