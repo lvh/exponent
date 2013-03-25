@@ -46,8 +46,9 @@ class CredentialsCheckerTests(unittest.TestCase):
     Test cases for the password credentials checker.
     """
     def setUp(self):
-        self.checker = password.CredentialsChecker()
-        self.user = user.User(store=store.Store(), uid="uid")
+        self.store = store.Store()
+        self.checker = password.CredentialsChecker(store=self.store)
+        self.user = user.User(store=self.store, uid="uid")
 
         hashedPassword = FakeUsernameHashedPassword("password")
         IUHP = credentials.IUsernameHashedPassword
