@@ -42,22 +42,40 @@ class CredentialsChecker(item.Item):
 
     _dummy = attributes.boolean()
 
-    @defer.inlineCallbacks
     def requestAvatarId(self, loginCredentials, _getUser=_getUser):
         username = loginCredentials.username.decode("utf-8")
-        try:
-            thisUser = yield _getUser(self.store, username)
-        except ae.ItemNotFound:
-            log.msg("unknown username: {}".format(loginCredentials.username))
-            raise ce.UnauthorizedLogin("Unknown username")
+        d = defer.maybeDeferred(_getUser, self.store, username)
+        d.addCallbacks(
+            callback=self._userFound, callbackArgs=[loginCredentials],
+            errback=self._userNotFound, errbackArgs=[loginCredentials]
+        )
+        return d
 
 
-        stored = credentials.IUsernameHashedPassword(thisUser)
-        isCorrect = yield stored.checkPassword(loginCredentials.password)
-        if isCorrect:
-            defer.returnValue(thisUser.uid)
+    def _userFound(self, thisUser, loginCredentials):
+        check = credentials.IUsernameHashedPassword(thisUser).checkPassword
+        d = defer.maybeDeferred(check, loginCredentials.password)
+        return d.addCallback(self._passwordChecked, thisUser)
+
+
+    def _passwordChecked(self, wasCorrect, thisUser):
+        """
+        If the provided password checked out, returns the uid, otherwise raise
+        ``UnauthorizedLogin`` and log the failure.
+        """
+        if wasCorrect:
+            return thisUser.uid
         else:
             raise ce.UnauthorizedLogin("Wrong password")
+
+
+    def _userNotFound(self, failure, loginCredentials):
+        """
+        Logs that the user was not found and raises ``UnauthorizedLogin``.
+        """
+        failure.trap(ae.ItemNotFound)
+        log.msg("unknown username: {}".format(loginCredentials.username))
+        raise ce.UnauthorizedLogin("Unknown username")
 
 
 
