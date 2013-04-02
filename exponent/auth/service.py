@@ -15,7 +15,7 @@ def _getUserByUid(rootStore, uid):
 
 
 
-class AuthenticationResponderLocator(object):
+class AuthenticationLocator(amp.CommandLocator):
     """
     A base class for responder locators that deal with authentication.
     """

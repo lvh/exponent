@@ -5,8 +5,7 @@ from axiom import attributes, item
 from exponent import substore
 
 
-@substore.withSubstores
-class User(item.Item):
+class User(item.Item, substore.ChildMixin):
     """
     A user.
     """

@@ -62,7 +62,7 @@ class RealmTests(unittest.TestCase):
         return d
 
 
-class AuthenticationResponderLocatorTests(unittest.TestCase):
+class AuthenticationLocatorTests(unittest.TestCase):
     def setUp(self):
         self.store = store.Store()
         self.user = user.User(store=store.Store(), uid="uid")
@@ -92,7 +92,7 @@ class AuthenticationResponderLocatorTests(unittest.TestCase):
 
 
 
-class _TestResponder(service.AuthenticationResponderLocator):
+class _TestResponder(service.AuthenticationLocator):
     """
     An authentication responder locator for testing.
     """

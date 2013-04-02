@@ -2,7 +2,9 @@
 Classic username and password authentication.
 """
 from axiom import attributes, item, errors as ae
-from exponent.auth import errors as ee, user
+from exponent.auth import errors as ee, user, service
+from operator import methodcaller
+from os import urandom
 from twisted.cred import checkers, credentials, error as ce
 from twisted.internet import defer
 from twisted.protocols import amp
@@ -17,7 +19,7 @@ def _getUser(rootStore, username):
     """
     forThisUsername = _UidUsernameReference.username == username
     uid = rootStore.findUnique(_UidUsernameReference, forThisUsername).uid
-    return user.User.findUnique(rootStore, uid)
+    return user.User.findUniqueChild(rootStore, uid)
 
 
 
@@ -37,6 +39,8 @@ class CredentialsChecker(item.Item):
     """
     credentialInterfaces = [credentials.IUsernamePassword]
     powerupInterfaces = [checkers.ICredentialsChecker]
+
+    _dummy = attributes.boolean()
 
     @defer.inlineCallbacks
     def requestAvatarId(self, loginCredentials, _getUser=_getUser):
@@ -86,12 +90,48 @@ class LoginUsernamePassword(amp.Command):
 
 
 
-class PasswordAuthenticationLocator(object):
+class Locator(service.AuthenticationLocator):
     @LoginUsernamePassword.responder
-    def login(self, username, password):
-        pass
+    def login(self, username, password, exposedBoxSender):
+        encode = methodcaller("encode", "utf-8")
+        username, password = map(encode, [username, password])
+        loginCredentials = credentials.UsernamePassword(username, password)
+
+        d = self.portal.login(loginCredentials, None, amp.IBoxReceiver)
+        d.addCallbacks(self._loginSucceeded, self._loginFailed)
+        return d
 
 
-    @LoginUsernamePassword.responder
+    def _loginSucceeded(self, avatar):
+        """
+        Handles a succeeded login.
+        """
+
+
+    def _loginFailed(self, failure):
+        """
+        Handles a failed login attempt due to bad credentials.
+        """
+        failure.trap(ce.UnauthorizedLogin)
+        raise ee.BadCredentials()
+
+
+    @RegisterUsernamePassword.responder
     def register(self, username, password):
-        pass
+        self._checkUnique(username)
+
+        uid = urandom(320 // 8)
+        _UidUsernameReference(store=self.store, username=username, uid=uid)
+        return {"uid": uid}
+
+
+    def _checkUnique(self, username):
+        """
+        Verifies that the given username is unique.
+        """
+        UUR = _UidUsernameReference
+        withThisUsername = UUR.username == username
+
+        references = self.store.query(UUR, withThisUsername, limit=1)
+        if references.count() != 0:
+            raise ee.DuplicateCredentials()

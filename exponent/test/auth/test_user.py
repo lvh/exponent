@@ -5,19 +5,19 @@ from twisted.trial import unittest
 
 class UserTests(unittest.TestCase):
     def setUp(self):
-        self.rootStore = store.Store(self.mktemp())
+        self.store = store.Store(self.mktemp())
         self.uid = "test"
-        self.userStore = user.User.createStore(self.rootStore, self.uid)
-        self.user = user.User(store=self.userStore, uid=self.uid)
+        userStore = user.User.createChildStore(self.store, [self.uid])
+        self.user = user.User(store=userStore, uid=self.uid)
 
 
     def test_getUserByUid(self):
         """
         Tests that you can get a user by uid.
         """
-        testUser = user.User.findUnique(self.rootStore, "test")
+        testUser = user.User.findUniqueChild(self.store, ["test"])
         self.assertEqual(testUser, self.user)
-        self.assertEqual(testUser.store, self.userStore)
+        self.assertEqual(testUser.store, self.user.store)
 
 
     def test_getMissingUserByUid(self):
@@ -25,5 +25,6 @@ class UserTests(unittest.TestCase):
         Tests that you can get an appropriate exception when you try
         to get a user that doesn't exist.
         """
-        getBogusUser = lambda: user.User.findUnique(self.rootStore, "bogus")
+        def getBogusUser():
+            return user.User.findUniqueChild(self.store, "BOGUS")
         self.assertRaises(errors.ItemNotFound, getBogusUser)
