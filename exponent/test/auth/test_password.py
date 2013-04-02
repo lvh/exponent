@@ -197,9 +197,8 @@ class LoginTests(unittest.TestCase):
     def setUp(self):
         self.store = store.Store()
 
-        self.checker = password.CredentialsChecker(store=self.store)
-        iface = checkers.ICredentialsChecker
-        self.store.inMemoryPowerUp(self.checker, iface)
+        checker = password.CredentialsChecker(store=self.store)
+        self.store.inMemoryPowerUp(checker, checkers.ICredentialsChecker)
 
         self.locator = password.Locator(self.store)
 
