@@ -1,8 +1,8 @@
 """
-Tests for lock directories.
+Tests for write locks and write lock directories.
 """
 from axiom import store
-from exponent import directory
+from exponent import directory, exceptions
 from twisted.trial import unittest
 
 
@@ -56,4 +56,4 @@ class NonLockingWriteLockTests(unittest.TestCase):
         Attempts to acquire a store that doesn't exist.
         """
         d = self.directory.acquire(["DOES", "NOT", "EXIST"])
-        self.failureResultOf(d).trap(directory.NoSuchStoreException)
+        self.failureResultOf(d).trap(exceptions.NoSuchStoreException)

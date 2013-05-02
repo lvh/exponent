@@ -2,6 +2,7 @@
 Lock directories.
 """
 from axiom import attributes, item, store
+from exponent import exceptions
 from twisted.internet import defer
 from zope import interface
 
@@ -58,13 +59,6 @@ class AlreadyReleasedException(Exception):
 
 
 
-class NoSuchStoreException(Exception):
-    """
-    The requested store does not exist.
-    """
-
-
-
 @interface.implementer(IWriteLockDirectory)
 class FakeWriteLockDirectory(item.Item):
     """
@@ -75,7 +69,7 @@ class FakeWriteLockDirectory(item.Item):
     def acquire(self, pathSegments):
         storePath = self.store.filesdir.descendant(pathSegments)
         if not storePath.exists():
-            return defer.fail(NoSuchStoreException())
+            return defer.fail(exceptions.NoSuchStoreException())
         lock = FakeWriteLock(store.Store(storePath))
         return defer.succeed(lock)
 
