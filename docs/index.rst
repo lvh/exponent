@@ -13,7 +13,7 @@ Contents:
 
    introduction.rst
    tutorial/index.rst
-   auth/index.rst
+   auth.rst
 
 
 
