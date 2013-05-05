@@ -14,7 +14,7 @@ Contents:
    introduction.rst
    tutorial/index.rst
    auth.rst
-
+   upgrading.rst
 
 
 Indices and tables
