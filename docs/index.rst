@@ -14,6 +14,7 @@ Contents:
    introduction.rst
    tutorial/index.rst
    auth.rst
+   storage.rst
    upgrading.rst
 
 
