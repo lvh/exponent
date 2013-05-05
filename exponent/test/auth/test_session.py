@@ -21,7 +21,7 @@ class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
     """
     Tests for the session-based login AMP command.
     """
-    command = session.LoginSession
+    command = session.LoginWithSession
     argumentObjects = argumentStrings = {
         "userIdentifier": "uid",
         "sessionIdentifier": "sid"
