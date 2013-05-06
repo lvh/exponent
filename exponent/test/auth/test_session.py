@@ -33,6 +33,9 @@ class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
 
 
 class LoginTests(unittest.TestCase):
+    """
+    Tests for authenticating using sessions.
+    """
     def setUp(self):
         self.store = store.Store()
         self.user = common.User(store=store.Store(), uid="uid")
@@ -41,6 +44,15 @@ class LoginTests(unittest.TestCase):
 
 
     def _login(self, userIdentifier=None, sessionIdentifier=None):
+        """
+        Attempts to authenticate as the user using a session.
+
+        :param userIdentifier: The user identifier to use. If unspecified or
+            or ``None``, uses the test user identifier.
+        :param sessionIdentifier: The session identifier to use. If
+            unspecified, uses the first valid session identifier for the
+            current user.
+        """
         if userIdentifier is None:
             userIdentifier = self.user.identifier
         if sessionIdentifier is None:
