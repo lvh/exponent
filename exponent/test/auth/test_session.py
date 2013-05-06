@@ -92,4 +92,5 @@ class LoginTests(unittest.TestCase):
         """
         oldIdentifier = self._getCurrentIdentifier()
         d = self._login(self.user.uid, oldIdentifier)
+        self.assertFailure(d, errors.BadCredentials)
         return d
