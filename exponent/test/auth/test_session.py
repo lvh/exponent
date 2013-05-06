@@ -2,7 +2,7 @@
 Tests for session-based authentication.
 """
 from axiom import store
-from exponent.auth import errors, session, user
+from exponent.auth import errors, session, common
 from twisted.trial import unittest
 from txampext import commandtests
 
@@ -35,14 +35,14 @@ class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
 class LoginTests(unittest.TestCase):
     def setUp(self):
         self.store = store.Store()
-        self.user = user.User(store=store.Store(), uid="uid")
+        self.user = common.User(store=store.Store(), uid="uid")
         session._Session(store=self.user.store, identifier="sid")
         self._locator = session.Locator(self.store)
 
 
     def _login(self, userIdentifier=None, sessionIdentifier=None):
         if userIdentifier is None:
-            userIdentifier = self.user.uid
+            userIdentifier = self.user.identifier
         if sessionIdentifier is None:
             sessionIdentifier = self._getCurrentIdentifier()
 
