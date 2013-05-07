@@ -84,7 +84,7 @@ class RegisterUsernamePassword(amp.Command):
     Registers with a username and password.
     """
     arguments = [
-        ("username", amp.Unicode()),
+        ("userIdentifier", amp.String()),
         ("password", amp.Unicode())
     ]
     response = []
