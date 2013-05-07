@@ -1,39 +1,41 @@
-import functools
-
-from exponent.auth import user
+from exponent.auth import common
 from twisted.cred import checkers, portal
 from twisted.internet import defer
 from twisted.protocols import amp
 from zope import interface
 
 
-def _getUserByUid(rootStore, uid):
+def _getUserByIdentifier(rootStore, userIdentifier):
     """
     Gets a user by uid.
     """
-    return defer.succeed(user.User.findUnique(rootStore, uid))
+    user = common.User.findUnique(rootStore, userIdentifier)
+    return defer.succeed(user)
 
 
 
 class AuthenticationLocator(amp.CommandLocator):
     """
-    A base class for responder locators that deal with authentication.
+    A base class for responder locators that allow users to authenticate.
     """
     credentialInterfaces = []
 
-    def __init__(self, store, _getUserByUid=_getUserByUid):
+    def __init__(self, store):
         """
         Initializes an authentication responder locator.
 
         :param store: The root store.
-        :param _getUserByUid: Binary callable that takes a store and a user
-        uid, and returns a deferred User. This will be used by the realm to
-        get users.
         """
         self.store = store
-        realm = Realm(functools.partial(_getUserByUid, store))
+
         storeCheckers = store.powerupsFor(checkers.ICredentialsChecker)
-        self.portal = portal.Portal(realm, storeCheckers)
+        self.portal = portal.Portal(Realm(store), storeCheckers)
+
+
+    def acquireStore(self, userIdentifier):
+        """
+        Acquires a user store.
+        """
 
 
 
@@ -57,9 +59,9 @@ class Realm(object):
 
 
 
-def _gotUser(thisUser):
+def _gotUser(user):
     """
     Adapts the user to ``IBoxReceiver`` and returns a 3-tuple suitable
     as the return value for ``requestAvatar``.
     """
-    return amp.IBoxReceiver, amp.IBoxReceiver(thisUser), lambda: None
+    return amp.IBoxReceiver, amp.IBoxReceiver(user), lambda: None

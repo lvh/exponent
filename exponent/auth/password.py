@@ -13,25 +13,6 @@ from txampext import axiomtypes, exposed
 from zope import interface
 
 
-def _getUser(rootStore, username):
-    """
-    Gets a user by username.
-    """
-    forThisUsername = _UidUsernameReference.username == username
-    uid = rootStore.findUnique(_UidUsernameReference, forThisUsername).uid
-    return user.User.findUniqueChild(rootStore, uid)
-
-
-
-class _UidUsernameReference(item.Item):
-    """
-    A reference to match a uid to a username.
-    """
-    uid = attributes.bytes(allowNone=False, indexed=True)
-    username = attributes.text(allowNone=False, indexed=True)
-
-
-
 @interface.implementer(checkers.ICredentialsChecker)
 class CredentialsChecker(item.Item):
     """
@@ -42,13 +23,11 @@ class CredentialsChecker(item.Item):
 
     _dummy = attributes.boolean()
 
-    def requestAvatarId(self, loginCredentials, _getUser=_getUser):
-        username = loginCredentials.username.decode("utf-8")
-        d = defer.maybeDeferred(_getUser, self.store, username)
-        d.addCallbacks(
+    def requestAvatarId(self, loginCredentials):
+        userIdentifier = loginCredentials.username
+        d = self.acquireStore(userIdentifier).addCallbacks(
             callback=self._userFound, callbackArgs=[loginCredentials],
-            errback=self._userNotFound, errbackArgs=[loginCredentials]
-        )
+            errback=self._userNotFound, errbackArgs=[loginCredentials])
         return d
 
 
@@ -97,12 +76,12 @@ class LoginUsernamePassword(amp.Command):
     Log in with a username and password.
     """
     arguments = [
-        ("username", amp.Unicode()),
+        ("userIdentifier", amp.String()),
         ("password", amp.Unicode()),
         exposed.EXPOSED_BOX_SENDER
     ]
     response = [
-        ("uid", axiomtypes.typeFor(user.User.uid))
+        ("uid", axiomtypes.typeFor(user.User.identifier))
     ]
     errors = dict([ee.BadCredentials.asAMP()])
 

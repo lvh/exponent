@@ -40,7 +40,7 @@ class LoginTests(unittest.TestCase):
         self.store = store.Store()
         self.user = common.User(store=store.Store(), uid="uid")
         session._Session(store=self.user.store, identifier="sid")
-        self._locator = session.Locator(self.store)
+        self._locator = session.LoginLocator(self.store)
 
 
     def _login(self, userIdentifier=None, sessionIdentifier=None):
@@ -94,3 +94,11 @@ class LoginTests(unittest.TestCase):
         d = self._login(self.user.uid, oldIdentifier)
         self.assertFailure(d, errors.BadCredentials)
         return d
+
+
+
+class SessionLocatorTests(unittest.TestCase):
+    """
+    Tests for the locator for session commands for users that have
+    already logged in.
+    """
