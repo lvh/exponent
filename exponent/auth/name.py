@@ -3,7 +3,7 @@ Tools for mapping names to user identifiers.
 """
 from axiom import attributes, errors as ae, item
 from exponent._util import synchronous
-from exponent.auth import errors as eae, user
+from exponent.auth import errors as eae, common
 from zope import interface
 
 
@@ -40,8 +40,8 @@ class _NameReferenceResolver(item.Item):
         except ae.ItemNotFound:
             raise eae.BadCredentials()
 
-        reference = self.store.findUnique(_UUR, _UUR.name == name)
-        return user.User.findUniqueChild(self.store, reference.identifier)
+        identifier = self.store.findUnique(_UUR, _UUR.name == name).identifier
+        return common.User.findUniqueChild(self.store, identifier)
 
 
 
