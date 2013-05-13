@@ -1,17 +1,6 @@
-from exponent.auth import common
 from twisted.cred import checkers, portal
-from twisted.internet import defer
 from twisted.protocols import amp
 from zope import interface
-
-
-def _getUserByIdentifier(rootStore, userIdentifier):
-    """
-    Gets a user by uid.
-    """
-    user = common.User.findUnique(rootStore, userIdentifier)
-    return defer.succeed(user)
-
 
 
 class AuthenticationLocator(amp.CommandLocator):
