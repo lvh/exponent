@@ -1,9 +1,23 @@
+import sys
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 import re
 versionLine = open("exponent/_version.py", "rt").read()
 match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", versionLine, re.M)
 versionString = match.group(1)
+
+class Tox(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import tox
+        errno = tox.cmdline(self.test_args)
+        sys.exit(errno)
 
 setup(name='exponent',
       version=versionString,
@@ -15,8 +29,9 @@ setup(name='exponent',
       author_email='_@lvh.cc',
 
       packages=["exponent", "exponent.test"],
-      setup_requires=['setuptools_trial'],
       test_suite="exponent.test",
+      setup_requires=['tox'],
+      cmdclass={'test': Tox},
       zip_safe=True,
 
       license='ISC',
