@@ -1,9 +1,9 @@
 """
 Tests for the core authentication services.
 """
-from axiom import attributes, item, store
-from exponent.auth import service, user
-from twisted.cred import checkers, credentials, error as ce, portal
+from axiom import store
+from exponent.auth import service, common
+from twisted.cred import checkers, credentials, portal
 from twisted.internet import defer
 from twisted.protocols import amp
 from twisted.trial import unittest
@@ -32,7 +32,7 @@ class RealmTests(unittest.TestCase):
         Creates an in-memory user with a stub ``IBoxReceiver`` powerup, and
         attempts to request an avatar for that user.
         """
-        testUser = user.User(store=store.Store(), uid="test")
+        testUser = common.User(store=store.Store(), uid="test")
 
         def getUser(uid):
             self.assertEqual(uid, "test")
@@ -65,7 +65,7 @@ class RealmTests(unittest.TestCase):
 class AuthenticationLocatorTests(unittest.TestCase):
     def setUp(self):
         self.store = store.Store()
-        self.user = user.User(store=store.Store(), uid="uid")
+        self.user = common.User(store=store.Store(), uid="uid")
         self.avatar = object()
         self.user.inMemoryPowerUp(self.avatar, amp.IBoxReceiver)
 
