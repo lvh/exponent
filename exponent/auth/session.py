@@ -2,17 +2,8 @@
 Session-based authentication.
 """
 from axiom import attributes, errors as ae, item
-from exponent.auth import service, errors as eae, identifier
+from exponent.auth import common, errors as eae, service
 from twisted.protocols import amp
-
-
-class RequestSession(amp.Command):
-    """
-    Requests a new session identifier.
-    """
-    arguments = []
-    response = [("sessionIdentifier", amp.String())]
-
 
 
 class LoginWithSession(amp.Command):
@@ -27,7 +18,7 @@ class LoginWithSession(amp.Command):
 
 
 
-class LoginLocator(service.AuthenticationLocator):
+class AuthenticationLocator(service.AuthenticationLocator):
     """
     A locator for logging in using session identifiers.
     """
@@ -54,6 +45,26 @@ class LoginLocator(service.AuthenticationLocator):
 
 
 
+class RequestSession(amp.Command):
+    """
+    Requests a new session identifier.
+    """
+    arguments = []
+    response = [("sessionIdentifier", amp.String())]
+
+
+
+class Locator(amp.CommandLocator):
+    """
+    A locator for session commands for users that are already logged in.
+    """
+    def requestSession(self):
+        """
+        Requests a new session.
+        """
+
+
+
 class _Session(item.Item):
     """
     A stored session.
@@ -66,5 +77,5 @@ class _Session(item.Item):
         """
         Creates a session with a random indentifier.
         """
-        sessionIdentifier = identifier.createIdentifier()
+        sessionIdentifier = common._createIdentifier()
         return cls(store=store, identifier=sessionIdentifier)
