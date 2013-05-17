@@ -65,7 +65,14 @@ class IToken(interface.Interface):
 
 
 class _InvalidationMixin(object):
+    """
+    A mixin for tokens that invalidates them after some amount of time.
+    """
     validity = timedelta(seconds=60)
+    """
+    The amount of time to wait before automatically removing the token.
+    """
+
 
     def stored(self):
         """
