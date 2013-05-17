@@ -1,7 +1,8 @@
 """
 Tests for common authentication infrastructure.
 """
-from axiom import attributes, errors, item, store
+from axiom import attributes, errors, item, scheduler, store
+from epsilon import extime
 from exponent.auth import common
 from inspect import getargspec
 from os import urandom
@@ -120,6 +121,67 @@ def _urandom(numBytes):
     bytes as you ask for.
     """
     return "\x00" * numBytes
+
+
+
+class TokenInvalidationTests(unittest.TestCase):
+    """
+    Tests for automatic time-based token invalidation.
+    """
+    def setUp(self):
+        self.now = extime.Time()
+        self.store = store.Store()
+        self.scheduler = scheduler.IScheduler(self.store)
+        self.scheduler.now = lambda: self.now
+
+
+    def test_oneMinute(self):
+        """
+        The token validity is one minute.
+        """
+        self.assertEqual(common.Token.validity.total_seconds(), 60)
+
+
+    def test_invalidate(self):
+        """
+        A token is removed from the store when the validity period has passed.
+        """
+        token = common.Token(store=self.store)
+        self.now = extime.Time() + token.validity
+        self.scheduler.tick()
+        self.assertIdentical(token.store, None)
+
+
+    def test_invalidateWhenAlreadyDeletedFromStore(self):
+        """
+        The invalidator completes cleanly if the token was already deleted
+        from the store.
+        """
+        token = common.Token(store=self.store)
+        token.deleteFromStore()
+        self.now = extime.Time() + token.validity
+        self.scheduler.tick()
+
+
+
+class TokenTests(unittest.TestCase):
+    """
+    Tests for the regular token class.
+    """
+    def test_usesRandomIdentifier(self):
+        """
+        The token identifier is created by the function that produces
+        identifiers.
+        """
+        factory = common.Token.identifier.defaultFactory
+        self.assertIdentical(factory, common._createIdentifier)
+
+
+    def test_interface(self):
+        """
+        Tokens provide the ``IToken`` interface.
+        """
+        self.assertTrue(common.IToken.providedBy(common.Token()))
 
 
 

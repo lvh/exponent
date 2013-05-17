@@ -1,7 +1,9 @@
 """
 The base model for users.
 """
-from axiom import attributes, item
+from axiom import attributes, item, scheduler
+from datetime import timedelta
+from epsilon import extime
 from exponent import substore, _util
 from os import urandom
 from twisted.cred import checkers, credentials, error
@@ -50,6 +52,7 @@ def _createIdentifier(bits=320, _urandom=urandom):
     return urandom(bits // 8).encode("hex")
 
 
+
 class IToken(interface.Interface):
     """
     A temporary authentication token.
@@ -58,6 +61,43 @@ class IToken(interface.Interface):
         """
         The token identifier.
         """)
+
+
+
+class _InvalidationMixin(object):
+    validity = timedelta(seconds=60)
+
+    def stored(self):
+        """
+        Schedules the token to be invalidated.
+        """
+        invalidator = _TokenInvalidator(store=self.store, token=self)
+        when = extime.Time() + self.validity
+        scheduler.IScheduler(self.store).schedule(invalidator, when)
+
+
+
+class _TokenInvalidator(item.Item):
+    """
+    When run, invalidates a token by deleting it from the store.
+    """
+    token = attributes.reference(allowNone=False)
+
+    def run(self):
+        """
+        Deletes the token from the store, if it still exists.
+        """
+        if self.token is not None:
+            self.token.deleteFromStore()
+
+
+
+@interface.implementer(IToken)
+class Token(_InvalidationMixin, item.Item):
+    """
+    A generic token.
+    """
+    identifier = attributes.bytes(defaultFactory=_createIdentifier)
 
 
 
