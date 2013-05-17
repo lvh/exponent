@@ -24,6 +24,13 @@ class AuthenticationLocator(amp.CommandLocator):
     def acquireStore(self, userIdentifier):
         """
         Acquires a user store.
+
+        :param userIdentifier: The user identifier for which to retrieve the
+            store.
+        :type userIdentifier: ``str``
+        :raises BadCredentials: The user identifier was unknown.
+        :return: A deferred reference to the user's store.
+        :rtype: ``Deferred axiom.store.Store``
         """
 
 
