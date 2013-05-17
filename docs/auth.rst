@@ -61,6 +61,11 @@ authentication commands.
 These tokens are long, random strings (320 bits of entropy). They have
 a very limited validity: they are single-use and expire after one minute.
 
+This means that there are multiple Cred authentication sequences going
+on: each individual authentication method uses Cred with their
+particular authentication system to produce tokens as avatars, and
+``LogIn`` which takes tokens to produce user stores as avatars.
+
 Password authentication
 -----------------------
 
@@ -82,9 +87,10 @@ The client calls ``SetPassword``.
 Logging in with a password
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The client calls ``LoginWithPassword``.
+The client calls ``AuthenticateWithPassword``, and receives a token in the
+response. That token can
 
-.. autoclass:: LoginWithPassword
+.. autoclass:: AuthenticateWithPassword
 
 Session authentication
 ----------------------
@@ -103,9 +109,11 @@ Logging in using a session
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The client logs in by calling ``LoginWithSession`` with the user's
-identifier and a valid session identifier. It returns a new session
-identifier. The client stores the new session identifier.
+identifier and a valid session identifier. It returns a token and a
+new session identifier. The client stores the new session identifier.
+The client calls ``LogIn`` with its tokens, possibly only the session
+token. The client is then logged in.
 
-This invalidates the old session identifier.
+The old session identifier is invalidated after a single use.
 
 .. autoclass:: LoginWithSession
