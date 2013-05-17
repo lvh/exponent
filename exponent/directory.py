@@ -6,6 +6,7 @@ from exponent import exceptions
 from twisted.internet import defer
 from zope import interface
 
+
 class IWriteLockDirectory(interface.Interface):
     """
     A write lock directory for stores.
