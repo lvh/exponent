@@ -110,7 +110,7 @@ class Token(_InvalidationMixin, item.Item):
 
 class ITokenSet(credentials.ICredentials):
     """
-    A set of tokens.
+    A set of tokens identifiers being used to log in.
     """
     identifiers = interface.Attribute(
          """
@@ -123,6 +123,11 @@ class ITokenSet(credentials.ICredentials):
 
 @interface.implementer(ITokenSet)
 class TokenSet(object):
+    """
+    A set of token identifiers.
+
+    These are credentials being used to log in.
+    """
     def __init__(self, identifiers):
         self.identifiers = frozenset(identifiers)
         if len(self.identifiers) != len(identifiers):
@@ -142,6 +147,8 @@ class TokenCounter(item.Item):
 
     The second simplest is a number of required tokens of 0, meaning no
     authentication at all is required to log in as anyone.
+
+    This should be stored in the user's store.
     """
     credentialInterfaces = [ITokenSet]
 
