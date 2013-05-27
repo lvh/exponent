@@ -2,14 +2,12 @@
 Classic username and password authentication.
 """
 from axiom import attributes, item, errors as ae
-from exponent.auth import errors as ee, user, service
-from operator import methodcaller
-from os import urandom
+from exponent import directory
+from exponent.auth import errors as eae, service
 from twisted.cred import checkers, credentials, error as ce
 from twisted.internet import defer
 from twisted.protocols import amp
 from twisted.python import log
-from txampext import axiomtypes, exposed
 from zope import interface
 
 
@@ -17,6 +15,8 @@ from zope import interface
 class CredentialsChecker(item.Item):
     """
     Checks the user's username and password.
+
+    This will be stored in the root store.
     """
     credentialInterfaces = [credentials.IUsernamePassword]
     powerupInterfaces = [checkers.ICredentialsChecker]
@@ -24,26 +24,38 @@ class CredentialsChecker(item.Item):
     _dummy = attributes.boolean()
 
     def requestAvatarId(self, loginCredentials):
+        """
+        Attempts to authenticate with the given credentials, producing a
+        token.
+
+        :param loginCredentials: The credentials being used to log in: a user
+            identifier, and the user identifier's password.
+        :type loginCredentials: ``twisted.cred.credentials.IUsernamePassword``
+        :returns: A deferred token value, for which there will be a matching
+            token in the user's store.
+        :rtype: ``Deferred str``
+        """
         userIdentifier = loginCredentials.username
-        d = self.acquireStore(userIdentifier).addCallbacks(
+        lockDirectory = directory.IWriteLockDirectory(self.store)
+        d = lockDirectory.acquire(["users", userIdentifier]).addCallbacks(
             callback=self._userFound, callbackArgs=[loginCredentials],
             errback=self._userNotFound, errbackArgs=[loginCredentials])
         return d
 
 
-    def _userFound(self, thisUser, loginCredentials):
-        check = credentials.IUsernameHashedPassword(thisUser).checkPassword
+    def _userFound(self, userStore, loginCredentials):
+        check = credentials.IUsernameHashedPassword(userStore).checkPassword
         d = defer.maybeDeferred(check, loginCredentials.password)
-        return d.addCallback(self._passwordChecked, thisUser)
+        return d.addCallback(self._passwordChecked, userStore)
 
 
-    def _passwordChecked(self, wasCorrect, thisUser):
+    def _passwordChecked(self, wasCorrect, userStore):
         """
         If the provided password checked out, returns the uid, otherwise raise
         ``UnauthorizedLogin`` and log the failure.
         """
         if wasCorrect:
-            return thisUser.uid
+            return userStore.uid
         else:
             raise ce.UnauthorizedLogin("Wrong password")
 
@@ -53,82 +65,64 @@ class CredentialsChecker(item.Item):
         Logs that the user was not found and raises ``UnauthorizedLogin``.
         """
         failure.trap(ae.ItemNotFound)
-        log.msg("unknown username: {}".format(loginCredentials.username))
-        raise ce.UnauthorizedLogin("Unknown username")
+        template = "failed password auth, unknown user identifier: {}"
+        log.msg(template.format(loginCredentials.username))
+        raise ce.UnauthorizedLogin("Unknown user identifier")
 
 
 
-class RegisterUsernamePassword(amp.Command):
+class AuthenticateWithPassword(amp.Command):
     """
-    Registers with a username and password.
+    Authenticates with a password.
     """
     arguments = [
         ("userIdentifier", amp.String()),
         ("password", amp.Unicode())
     ]
-    response = []
-    errors = dict([ee.BadCredentials.asAMP()])
+    response = [
+        ("token", amp.String()),
+    ]
+    errors = dict([eae.BadCredentials.asAMP()])
 
 
 
-class LoginUsernamePassword(amp.Command):
+class AuthenticationLocator(service.AuthenticationLocator):
     """
-    Log in with a username and password.
+    A locator for commands related to logging in using a password.
+    """
+    @AuthenticateWithPassword.responder
+    def authenticate(self, userIdentifier, password):
+        """
+        Attempts to authenticate the user given the password.
+
+        :returns: A deferred authentication token, wrapped in a dictionary
+            so it is an appropriate response value.
+        :rtype: deferred ``{"token": token}``
+        """
+
+
+
+class SetPassword(amp.Command):
+    """
+    Sets the current client's password.
     """
     arguments = [
-        ("userIdentifier", amp.String()),
-        ("password", amp.Unicode()),
-        exposed.EXPOSED_BOX_SENDER
+        ("password", amp.Unicode())
     ]
-    response = [
-        ("uid", axiomtypes.typeFor(user.User.identifier))
-    ]
-    errors = dict([ee.BadCredentials.asAMP()])
+    response = []
+    errors = dict([eae.BadCredentials.asAMP()])
 
 
 
-class Locator(service.AuthenticationLocator):
-    @LoginUsernamePassword.responder
-    def login(self, username, password, exposedBoxSender):
-        encode = methodcaller("encode", "utf-8")
-        username, password = map(encode, [username, password])
-        loginCredentials = credentials.UsernamePassword(username, password)
-
-        d = self.portal.login(loginCredentials, None, amp.IBoxReceiver)
-        d.addCallbacks(self._loginSucceeded, self._loginFailed)
-        return d
-
-
-    def _loginSucceeded(self, avatar):
+class Locator(amp.CommandLocator):
+    """
+    A locator for password commands for users that are already logged in.
+    """
+    def setPassword(self, password):
         """
-        Handles a succeeded login.
+        Sets the current user's password to the provided value.
+
+        :returns: A deferred that will fire with an empty dictionary when the
+            password has been set.
+        :rtype: deferred ``{}``
         """
-
-
-    def _loginFailed(self, failure):
-        """
-        Handles a failed login attempt due to bad credentials.
-        """
-        failure.trap(ce.UnauthorizedLogin)
-        raise ee.BadCredentials()
-
-
-    @RegisterUsernamePassword.responder
-    def register(self, username, password):
-        self._checkUnique(username)
-
-        uid = urandom(320 // 8)
-        _UidUsernameReference(store=self.store, username=username, uid=uid)
-        return {"uid": uid}
-
-
-    def _checkUnique(self, username):
-        """
-        Verifies that the given username is unique.
-        """
-        UUR = _UidUsernameReference
-        withThisUsername = UUR.username == username
-
-        references = self.store.query(UUR, withThisUsername, limit=1)
-        if references.count() != 0:
-            raise ee.DuplicateCredentials()
