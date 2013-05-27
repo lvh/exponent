@@ -32,10 +32,10 @@ class RealmTests(unittest.TestCase):
         Creates an in-memory user with a stub ``IBoxReceiver`` powerup, and
         attempts to request an avatar for that user.
         """
-        testUser = common.User(store=store.Store(), uid="test")
+        testUser = common.User(store=store.Store(), identifier="test")
 
-        def getUser(uid):
-            self.assertEqual(uid, "test")
+        def getUser(identifier):
+            self.assertEqual(identifier, "test")
             return defer.succeed(testUser)
 
         boxReceiver = object()
@@ -65,7 +65,7 @@ class RealmTests(unittest.TestCase):
 class AuthenticationLocatorTests(unittest.TestCase):
     def setUp(self):
         self.store = store.Store()
-        self.user = common.User(store=store.Store(), uid="uid")
+        self.user = common.User(store=store.Store(), identifier="uid")
         self.avatar = object()
         self.user.inMemoryPowerUp(self.avatar, amp.IBoxReceiver)
 

@@ -17,7 +17,7 @@ class CredentialsCheckerTests(unittest.TestCase):
         self.rootStore = store.Store()
         self.userStore = store.Store()
         self.checker = password.CredentialsChecker(store=self.rootStore)
-        self.user = common.User(store=self.userStore, uid="uid")
+        self.user = common.User(store=self.userStore, identifier="uid")
 
         hashedPassword = FakeUsernameHashedPassword("password")
         IUHP = credentials.IUsernameHashedPassword
@@ -46,7 +46,7 @@ class CredentialsCheckerTests(unittest.TestCase):
         Requests an avatar id for a user.
         """
         d = self._requestAvatarId("username", "password")
-        return d.addCallback(self.assertEqual, self.user.uid)
+        return d.addCallback(self.assertEqual, self.user.identifier)
 
 
     def test_requestAvatarIdWithBadPassword(self):

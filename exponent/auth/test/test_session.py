@@ -38,7 +38,7 @@ class LoginTests(unittest.TestCase):
     """
     def setUp(self):
         self.store = store.Store()
-        self.user = common.User(store=store.Store(), uid="uid")
+        self.user = common.User(store=store.Store(), identifier="uid")
         session._Session(store=self.user.store, identifier="sid")
         self._locator = session.LoginLocator(self.store)
 
