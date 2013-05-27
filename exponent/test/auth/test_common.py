@@ -146,7 +146,7 @@ class TokenInvalidationTests(unittest.TestCase):
         """
         A token is removed from the store when the validity period has passed.
         """
-        token = common.Token(store=self.store)
+        token = common.Token(store=self.store, source="test")
         self.now = extime.Time() + token.validity
         self.scheduler.tick()
         self.assertIdentical(token.store, None)
@@ -157,17 +157,19 @@ class TokenInvalidationTests(unittest.TestCase):
         The invalidator completes cleanly if the token was already deleted
         from the store.
         """
-        token = common.Token(store=self.store)
+        token = common.Token(store=self.store, source="test")
         token.deleteFromStore()
         self.now = extime.Time() + token.validity
         self.scheduler.tick()
 
 
 
-class TokenTests(unittest.TestCase):
+class TokenTests(object):
     """
-    Tests for the regular token class.
+    Tests for token implementations.
     """
+    tokenClass = None
+
     def test_usesRandomIdentifier(self):
         """
         The token identifier is created by the function that produces
@@ -215,22 +217,6 @@ class TokenSetTests(unittest.TestCase):
 
 
 
-class _MagicToken(item.Item):
-    """
-    A magical token.
-    """
-    identifier = attributes.bytes()
-
-
-
-class _CrazyToken(item.Item):
-    """
-    A crazy token.
-    """
-    identifier = attributes.bytes()
-
-
-
 class TokenCounterTests(unittest.TestCase):
     """
     Tests for the token-counting credentials checker.
@@ -239,16 +225,7 @@ class TokenCounterTests(unittest.TestCase):
         self.store = store.Store()
         self.user = common.User(store=self.store, identifier="uid")
         self.counter = common.TokenCounter(store=self.store)
-        self.token = self._createExtraToken(_MagicToken, "first token")
-
-
-    def _createExtraToken(self, cls=_CrazyToken, identifier="second token"):
-        """
-        Creates an extra token of given class and registers it as a powerup.
-        """
-        extraToken = cls(store=self.store, identifier=identifier)
-        self.store.powerUp(extraToken, common.IToken)
-        return extraToken
+        self.token = common.Token(store=self.store, source="magic")
 
 
     def test_requireOneTokenByDefault(self):
@@ -260,7 +237,8 @@ class TokenCounterTests(unittest.TestCase):
 
     def _assertAccepts(self, identifiers):
         """
-        Asserts that the counter accepts the given identifiers.
+        Asserts that the counter accepts the given identifiers. Furthermore,
+        asserts that the identifiers are invalidated after being accepted.
         """
         d = self.counter.requestAvatarId(common.TokenSet(identifiers))
         self.assertEqual(self.successResultOf(d), self.user.identifier)
@@ -269,9 +247,21 @@ class TokenCounterTests(unittest.TestCase):
     def _assertNotAccepts(self, identifiers):
         """
         Asserts that the counter does not accept the given identifiers.
+        Furthermore, asserts that the identifiers are not invalidated after
+        being rejected.
         """
         d = self.counter.requestAvatarId(common.TokenSet(identifiers))
         self.failureResultOf(d).trap(errors.UnauthorizedLogin)
+
+
+    def _countTokens(self, identifiers):
+        """
+        Counts the number of tokens in the store that have one of the given
+        identifiers.
+        """
+        withIdentifier = common.Token.identifier.oneOf(identifiers)
+        count = self.store.query(common.Token, withIdentifier).count()
+
 
 
     def test_acceptToken(self):
@@ -287,9 +277,11 @@ class TokenCounterTests(unittest.TestCase):
         The token counter returns the appropriate avatar id when requiring
         two tokens and being presented with two appropriate tokens.
         """
-        self.counter.requiredTokens = 2
-        extraToken = self._createExtraToken()
+        extraToken = common.Token(store=self.store, source="guesswork")
+        self.assertNotEqual(extraToken.source, self.token.source)
         identifiers = [self.token.identifier, extraToken.identifier]
+
+        self.counter.requiredTokens = 2
         self._assertAccepts(identifiers)
 
 
@@ -298,7 +290,7 @@ class TokenCounterTests(unittest.TestCase):
         The token counter accepts extra tokens, if more were provided than
         are strictly necessary.
         """
-        extraToken = self._createExtraToken()
+        extraToken = common.Token(store=self.store, source="guesswork")
         identifiers = [self.token.identifier, extraToken.identifier]
         self._assertAccepts(identifiers)
 
@@ -314,7 +306,7 @@ class TokenCounterTests(unittest.TestCase):
 
     def test_dontAcceptInvalidTokens(self):
         """
-        The token counter does not accept invalid tokens.
+        The token counter does not accept invalid token identifiers.
         """
         self._assertNotAccepts(["BOGUS"])
 
@@ -322,21 +314,11 @@ class TokenCounterTests(unittest.TestCase):
     def test_dontAcceptDuplicateTokenTypes(self):
         """
         The token counter only accepts a number tokens provided the token
-        types are unique.
+        sources are unique.
 
         Otherwise, an attacker knowing the victim's password could simply
         generate ``N`` password authentication tokens, bypassing a user's
         k-factor auth entirely.
         """
-        otherToken = self._createExtraToken(cls=self.token.__class__)
+        otherToken = common.Token(store=self.store, source=self.token.source)
         self._assertNotAccepts([self.token.identifier, otherToken.identifier])
-
-
-
-
-
-
-
-
-
-

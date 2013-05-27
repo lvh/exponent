@@ -53,24 +53,23 @@ def _createIdentifier(bits=320, _urandom=urandom):
 
 
 
-class IToken(interface.Interface):
+class Token(item.Item):
     """
-    A temporary authentication token.
-    """
-    identifier = interface.Attribute(
-        """
-        The token identifier.
-        """)
-
-
-
-class _InvalidationMixin(object):
-    """
-    A mixin for tokens that invalidates them after some amount of time.
+    An authentication token.
     """
     validity = timedelta(seconds=60)
     """
     The amount of time to wait before automatically removing the token.
+    """
+
+    identifier = attributes.bytes(defaultFactory=_createIdentifier)
+    """
+    The identifier of this token.
+    """
+
+    source = attributes.bytes(allowNone=False)
+    """
+    The authentication method that this token was created with.
     """
 
 
@@ -97,14 +96,6 @@ class _TokenInvalidator(item.Item):
         if self.token is not None:
             self.token.deleteFromStore()
 
-
-
-@interface.implementer(IToken)
-class Token(_InvalidationMixin, item.Item):
-    """
-    A generic token.
-    """
-    identifier = attributes.bytes(defaultFactory=_createIdentifier)
 
 
 
@@ -156,13 +147,13 @@ class TokenCounter(item.Item):
 
     @_util.synchronous
     def requestAvatarId(self, credentials, mind=None):
-        identifiers, types = set(), set()
-        for token in self.store.powerupsFor(IToken):
+        identifiers, sources = set(), set()
+        for token in self.store.query(Token):
             identifiers.add(token.identifier)
-            if type(token) in types:
+            if token.source in sources:
                 raise error.UnauthorizedLogin()
             else:
-                types.add(type(token))
+                sources.add(token.source)
 
         if len(identifiers & credentials.identifiers) >= self.requiredTokens:
             return self.store.findUnique(User).identifier
