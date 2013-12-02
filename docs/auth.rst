@@ -8,9 +8,9 @@ Users
 .. py:module:: exponent.auth.common
 
 Users are uniquely identified by a user identifier. User identifiers
-are random strings of sufficient length (320 bits worth of entropy).
-Authentication mechanisms, like all other commands, only use this
-identifier to refer to a user.
+are random strings of sufficient length, so that they can't be
+guessed. Authentication mechanisms, like all other commands, only use
+this identifier to refer to a user.
 
 Users are created by calling the ``CreateUser`` command.
 
@@ -58,8 +58,8 @@ authentication commands.
 
 .. autoclass:: LogIn
 
-These tokens are long, random strings (320 bits of entropy). They have
-a very limited validity: they are single-use and expire after one minute.
+These tokens are long, random strings. They have a very limited
+validity: they are single-use and expire after one minute.
 
 This means that there are multiple Cred authentication sequences going
 on: each individual authentication method uses Cred with their

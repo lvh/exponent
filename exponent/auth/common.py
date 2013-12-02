@@ -37,10 +37,9 @@ class LogIn(amp.Command):
 
 
 
-def _createIdentifier(bits=320, _urandom=urandom):
-    """
-    Creates a random identifier with ``bits`` worth of entropy, and encodes it
-    as a hexadecimal number.
+def _createIdentifier(bits=160, _urandom=urandom):
+    """Creates a random identifier with ``bits`` worth of entropy, and
+    encodes it in hexadecimal notation.
 
     :param bits: The number of bits of entropy.
     :type bits: ``int``
@@ -48,6 +47,7 @@ def _createIdentifier(bits=320, _urandom=urandom):
     :type _urandom: unary callable, num_bytes -> bytes
     :return: A hexadecimal identifier with ``bits`` worth of entropy.
     :rtype: bytes
+
     """
     return urandom(bits // 8).encode("hex")
 

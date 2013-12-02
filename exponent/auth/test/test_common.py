@@ -79,11 +79,11 @@ class CreateIdentifierTests(unittest.TestCase):
 
     def test_default(self):
         """By default, ``_createIdentifier`` asks its random number generator
-        for a string 320 bits long, and encodes it as hex.
+        for a string 160 bits long, and encodes it as hex.
 
         """
         identifier = self._createIdentifier()
-        expectedLength = (320 // 8) * 2 # 320 bits, hex encoded
+        expectedLength = (160 // 8) * 2 # 160 bits, hex encoded
         self.assertEqual(len(identifier), expectedLength)
 
 
@@ -156,9 +156,9 @@ class TokenInvalidationTests(unittest.TestCase):
 
 
     def test_invalidateWhenAlreadyDeletedFromStore(self):
-        """
-        The invalidator completes cleanly if the token was already deleted
+        """The invalidator completes cleanly if the token was already deleted
         from the store.
+
         """
         token = common.Token(store=self.store, source="test")
         token.deleteFromStore()
@@ -168,23 +168,23 @@ class TokenInvalidationTests(unittest.TestCase):
 
 
 class TokenTests(object):
-    """
-    Tests for token implementations.
+    """Tests for token implementations.
+
     """
     tokenClass = None
 
     def test_usesRandomIdentifier(self):
-        """
-        The token identifier is created by the function that produces
+        """The token identifier is created by the function that produces
         identifiers.
+
         """
         factory = common.Token.identifier.defaultFactory
         self.assertIdentical(factory, common._createIdentifier)
 
 
     def test_interface(self):
-        """
-        Tokens provide the ``IToken`` interface.
+        """Tokens provide the ``IToken`` interface.
+
         """
         self.assertTrue(common.IToken.providedBy(common.Token()))
 
