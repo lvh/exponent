@@ -73,24 +73,24 @@ class AuthenticateWithPassword(amp.Command):
 
 
 class PasswordAuthenticationLocator(AuthenticationLocator):
-    """
-    A locator for commands related to logging in using a password.
+    """A locator for commands related to logging in using a password.
+
     """
     @AuthenticateWithPassword.responder
     def authenticate(self, userIdentifier, password):
-        """
-        Attempts to authenticate the user given the password.
+        """Attempts to authenticate the user given the password.
 
         :returns: A deferred authentication token, wrapped in a dictionary
             so it is an appropriate response value.
         :rtype: deferred ``{"token": token}``
+
         """
 
 
 
 class SetPassword(amp.Command):
-    """
-    Sets the current client's password.
+    """Sets the current client's password.
+
     """
     arguments = [
         ("password", amp.Unicode())
@@ -101,14 +101,14 @@ class SetPassword(amp.Command):
 
 
 class PasswordLocator(locators.Locator):
-    """
-    A locator for password commands for users that are already logged in.
+    """A locator for password commands for logged-in users.
+
     """
     def setPassword(self, password):
-        """
-        Sets the current user's password to the provided value.
+        """Sets the current user's password to the given value.
 
         :returns: A deferred that will fire with an empty dictionary when the
             password has been set.
         :rtype: deferred ``{}``
+
         """
