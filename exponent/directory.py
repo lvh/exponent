@@ -48,7 +48,7 @@ class IWriteLock(interface.Interface):
 
 class AlreadyAcquiredException(Exception):
     """
-    The requested lock has already been acquired.
+    The requested lock has already been acquired somewhere else.
     """
 
 
