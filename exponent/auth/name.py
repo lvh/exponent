@@ -17,7 +17,7 @@ class INameResolver(interface.Interface):
 
         :param name: The name to resolve.
         :type name: ``unicode``
-        
+
         :return: A ``Deferred`` that will fire with the user identifier or
             ``BadCredentials`` if the name could not be resolved.
         """
@@ -51,13 +51,3 @@ class _UserIdentifierNameReference(item.Item):
     """
     identifier = attributes.bytes(allowNone=False, indexed=True)
     name = attributes.text(allowNone=False, indexed=True)
-
-
-
-
-
-
-
-
-
-
