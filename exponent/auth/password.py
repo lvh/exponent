@@ -1,73 +1,59 @@
 """
 Classic username and password authentication.
 """
-from axiom import attributes, item, errors as ae
-from exponent import directory
-from exponent.auth import errors as eae, service
-from twisted.cred import checkers, credentials, error as ce
+from axiom import attributes, item
+from exponent import directory, exceptions
+from exponent.auth.errors import BadCredentials
+from exponent.auth.service import AuthenticationLocator
+from twisted.cred.checkers import ICredentialsChecker
+from twisted.cred.credentials import IUsernameHashedPassword, IUsernamePassword
+from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import defer
 from twisted.protocols import amp
 from twisted.python import log
 from zope import interface
 
 
-@interface.implementer(checkers.ICredentialsChecker)
+@interface.implementer(ICredentialsChecker)
 class CredentialsChecker(item.Item):
     """
-    Checks the user's username and password.
+    Checks the user's user identifier and password.
 
     This will be stored in the root store.
     """
-    credentialInterfaces = [credentials.IUsernamePassword]
-    powerupInterfaces = [checkers.ICredentialsChecker]
+    credentialInterfaces = [IUsernamePassword]
+    powerupInterfaces = [ICredentialsChecker]
 
     _dummy = attributes.boolean()
 
+    @defer.inlineCallbacks
     def requestAvatarId(self, loginCredentials):
         """
         Attempts to authenticate with the given credentials, producing a
         token.
 
         :param loginCredentials: The credentials being used to log in: a user
-            identifier, and the user identifier's password.
+            identifier, and the user's password.
         :type loginCredentials: ``twisted.cred.credentials.IUsernamePassword``
         :returns: A deferred token value, for which there will be a matching
             token in the user's store.
         :rtype: ``Deferred str``
         """
-        userIdentifier = loginCredentials.username
+        identifier = loginCredentials.username
         lockDirectory = directory.IWriteLockDirectory(self.store)
-        d = lockDirectory.acquire(["users", userIdentifier]).addCallbacks(
-            callback=self._userFound, callbackArgs=[loginCredentials],
-            errback=self._userNotFound, errbackArgs=[loginCredentials])
-        return d
+        try:
+            lock = yield lockDirectory.acquire(["users", identifier])
+        except directory.AlreadyAcquiredException:
+            pass # TODO: do something useful here
+        except exceptions.NoSuchStoreException:
+            log.msg("unknown user identifier: {0}".format(identifier))
+            raise UnauthorizedLogin("Unknown user identifier")
 
-
-    def _userFound(self, userStore, loginCredentials):
-        check = credentials.IUsernameHashedPassword(userStore).checkPassword
-        d = defer.maybeDeferred(check, loginCredentials.password)
-        return d.addCallback(self._passwordChecked, userStore)
-
-
-    def _passwordChecked(self, wasCorrect, userStore):
-        """
-        If the provided password checked out, returns the uid, otherwise raise
-        ``UnauthorizedLogin`` and log the failure.
-        """
-        if wasCorrect:
-            return userStore.uid
+        storedCredentials = IUsernameHashedPassword(lock.store)
+        if (yield storedCredentials.checkPassword(loginCredentials.password)):
+            defer.returnValue(identifier)
         else:
-            raise ce.UnauthorizedLogin("Wrong password")
-
-
-    def _userNotFound(self, failure, loginCredentials):
-        """
-        Logs that the user was not found and raises ``UnauthorizedLogin``.
-        """
-        failure.trap(ae.ItemNotFound)
-        template = "failed password auth, unknown user identifier: {}"
-        log.msg(template.format(loginCredentials.username))
-        raise ce.UnauthorizedLogin("Unknown user identifier")
+            raise UnauthorizedLogin("Wrong password")
 
 
 
@@ -82,11 +68,11 @@ class AuthenticateWithPassword(amp.Command):
     response = [
         ("token", amp.String()),
     ]
-    errors = dict([eae.BadCredentials.asAMP()])
+    errors = dict([BadCredentials.asAMP()])
 
 
 
-class AuthenticationLocator(service.AuthenticationLocator):
+class AuthenticationLocator(AuthenticationLocator):
     """
     A locator for commands related to logging in using a password.
     """
@@ -110,7 +96,7 @@ class SetPassword(amp.Command):
         ("password", amp.Unicode())
     ]
     response = []
-    errors = dict([eae.BadCredentials.asAMP()])
+    errors = dict([BadCredentials.asAMP()])
 
 
 

@@ -1,34 +1,35 @@
 """
 Tests for password-related authentication functionality.
 """
-from axiom import errors as ae, store
+from axiom.store import Store
 from exponent.auth import common, errors, password
-from twisted.cred import checkers, credentials, error as ce
+from exponent.directory import IWriteLockDirectory, LocalWriteLock
+from exponent.exceptions import NoSuchStoreException
+from exponent._util import synchronous
+from twisted.cred.error import UnauthorizedLogin
+from twisted.cred.checkers import ICredentialsChecker
+from twisted.cred.credentials import UsernamePassword, IUsernameHashedPassword
 from twisted.internet import defer
-from twisted.trial import unittest
-from zope import interface
+from twisted.trial.unittest import SynchronousTestCase
+from zope.interface import implementer
 
 
-class CredentialsCheckerTests(unittest.TestCase):
+class CredentialsCheckerTests(SynchronousTestCase):
     """
     Test cases for the password credentials checker.
     """
     def setUp(self):
-        self.rootStore = store.Store()
-        self.userStore = store.Store()
+        self.rootStore = Store()
         self.checker = password.CredentialsChecker(store=self.rootStore)
+
+        self.userStore = Store()
         self.user = common.User(store=self.userStore, identifier="uid")
 
         hashedPassword = FakeUsernameHashedPassword("password")
-        IUHP = credentials.IUsernameHashedPassword
-        self.user.inMemoryPowerUp(hashedPassword, IUHP)
+        self.userStore.inMemoryPowerUp(hashedPassword, IUsernameHashedPassword)
 
-
-    def _getUser(self, _rootStore, username):
-        if username == "username":
-            return self.user
-        else:
-            raise ae.ItemNotFound()
+        directory = FakeWriteLockDirectory(self.userStore)
+        self.rootStore.inMemoryPowerUp(directory, IWriteLockDirectory)
 
 
     def _requestAvatarId(self, username, password):
@@ -36,17 +37,17 @@ class CredentialsCheckerTests(unittest.TestCase):
         Requests an avatar id with the given username and password (which
         should be UTF-8 encoded bytestrings).
         """
-        loginCredentials = credentials.UsernamePassword(username, password)
-        args = loginCredentials, self._getUser
-        return defer.maybeDeferred(self.checker.requestAvatarId, *args)
+        credentials = UsernamePassword(username, password)
+        return defer.maybeDeferred(self.checker.requestAvatarId, credentials)
 
 
     def test_requestAvatarId(self):
         """
-        Requests an avatar id for a user.
+        A user can request an avatar id using a user identifier and password.
         """
-        d = self._requestAvatarId("username", "password")
-        return d.addCallback(self.assertEqual, self.user.identifier)
+        d = self._requestAvatarId("uid", "password")
+        uid = self.successResultOf(d)
+        self.assertIdentical(uid, "uid")
 
 
     def test_requestAvatarIdWithBadPassword(self):
@@ -54,8 +55,8 @@ class CredentialsCheckerTests(unittest.TestCase):
         Requests an avatar id for a user that exists, but with the wrong
         password.
         """
-        d = self._requestAvatarId("username", "BOGUS")
-        return self.assertFailure(d, ce.UnauthorizedLogin)
+        d = self._requestAvatarId("uid", "BOGUS")
+        self.failureResultOf(d, UnauthorizedLogin)
 
 
     def test_requestAvatarIdForMissingUser(self):
@@ -63,11 +64,32 @@ class CredentialsCheckerTests(unittest.TestCase):
         Requests an avatar id for a missing user.
         """
         d = self._requestAvatarId("BOGUS", "BOGUS")
-        return self.assertFailure(d, ce.UnauthorizedLogin)
+        self.failureResultOf(d, UnauthorizedLogin)
 
 
 
-@interface.implementer(credentials.IUsernameHashedPassword)
+@implementer(IWriteLockDirectory)
+class FakeWriteLockDirectory(object):
+    """
+    A fake write lock directory.
+    """
+    def __init__(self, userStore):
+        self.userStore = userStore
+
+
+    @synchronous
+    def acquire(self, pathSegments):
+        """Attempts to acquire a user store.
+
+        """
+        if pathSegments == ["users", "uid"]:
+            return LocalWriteLock(self.userStore)
+        else:
+            raise NoSuchStoreException()
+
+
+
+@implementer(IUsernameHashedPassword)
 class FakeUsernameHashedPassword(object):
     """
     An ``IUsernameHashedPassword`` that actually just does string comparison.
@@ -102,12 +124,12 @@ class _ResponderTestMixin(object):
 
 
 
-class RegisterTests(unittest.TestCase):
+class RegisterTests(SynchronousTestCase):
     """
     Tests for registration.
     """
     def setUp(self):
-        self.locator = password.Locator(store.Store())
+        self.locator = password.Locator(Store())
 
 
     def register(self, username, password):
@@ -146,25 +168,25 @@ class RegisterTests(unittest.TestCase):
 
 
 class FakeCredentialsChecker(object):
-    credentialInterfaces = [credentials.IUsernameHashedPassword]
+    credentialInterfaces = [IUsernameHashedPassword]
 
     def requestAvatarId(self, credentials, mind):
         if credentials.username == "username":
             return defer.succeed("uid")
         else:
-            return defer.fail(ce.UnauthorizedLogin())
+            return defer.fail(UnauthorizedLogin())
 
 
 
-class LoginTests(unittest.TestCase):
+class LoginTests(SynchronousTestCase):
     """
     Tests for logging in.
     """
     def setUp(self):
-        self.store = store.Store()
+        self.store = Store()
 
         checker = password.CredentialsChecker(store=self.store)
-        self.store.inMemoryPowerUp(checker, checkers.ICredentialsChecker)
+        self.store.inMemoryPowerUp(checker, ICredentialsChecker)
 
         self.locator = password.Locator(self.store)
 
