@@ -2,7 +2,20 @@
  exponent
 ==========
 
-``exponent`` is an experimental toolkit for building applications with a fractal architecture.
+``exponent`` is an experimental toolkit for building applications with
+a fractal architecture.
+
+Uses a number of other technologies:
+
+- Twisted_, an event-driven networking engine
+- Axiom_, an object serialization layer for SQLite
+- AMP_, an RPC protocol
+- Foolscap_, an object-capability library for distributed systems
+
+.. _Twisted: https://www.twistedmatrix.com
+.. _Axiom: https://pypi.python.org/pypi/axiom
+.. _AMP: http://amp-protocol.net
+.. _Foolscap: http://foolscap.lothar.com/trac
 
 Changelog
 =========
