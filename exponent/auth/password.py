@@ -2,7 +2,7 @@
 Classic username and password authentication.
 """
 from axiom import attributes, item
-from exponent import directory, exceptions
+from exponent import directory, exceptions, locators
 from exponent.auth.errors import BadCredentials
 from exponent.auth.service import AuthenticationLocator
 from twisted.cred.checkers import ICredentialsChecker
@@ -72,7 +72,7 @@ class AuthenticateWithPassword(amp.Command):
 
 
 
-class AuthenticationLocator(AuthenticationLocator):
+class PasswordAuthenticationLocator(AuthenticationLocator):
     """
     A locator for commands related to logging in using a password.
     """
@@ -100,7 +100,7 @@ class SetPassword(amp.Command):
 
 
 
-class Locator(amp.CommandLocator):
+class PasswordLocator(locators.Locator):
     """
     A locator for password commands for users that are already logged in.
     """
