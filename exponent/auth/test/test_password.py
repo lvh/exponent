@@ -105,65 +105,22 @@ class FakeUsernameHashedPassword(object):
 
 class _ResponderTestMixin(object):
     command = None
-    """
-    The command.
+    """The command.
+
     """
 
     responderName = None
-    """
-    The name of the responder function.
+    """The name of the responder function.
+
     """
 
     def test_locateResponder(self):
-        """
-        Compares the located responder to the expected responder.
+        """Compares the located responder to the expected responder.
+
         """
         found = self.locator.locateResponder(self.command.__name__)
         expected = getattr(self.locator, self.responderName).im_func
         self.assertEqual(found, expected)
-
-
-
-class RegisterTests(SynchronousTestCase):
-    """
-    Tests for registration.
-    """
-    def setUp(self):
-        self.locator = password.Locator(Store())
-
-
-    def register(self, username, password):
-        """
-        Registers with the given username and password.
-        """
-        args = username, password
-        return defer.maybeDeferred(self.locator.register, *args)
-
-
-    def test_register(self):
-        """
-        Try normal registration.
-        """
-        d = self.register(u"username", u"password")
-        return d
-
-
-    def test_noDuplicateUsernames(self):
-        """
-        Can't register with a duplicate username.
-        """
-        d = self.register(u"username", u"password")
-        d.addCallback(self._tryToRegisterAgain)
-        return d
-
-
-    def _tryToRegisterAgain(self, _result):
-        """
-        Attempts to register again using the same username.
-        """
-        d = self.register(u"username", u"password")
-        self.assertFailure(d, errors.DuplicateCredentials)
-        return d
 
 
 
@@ -175,51 +132,3 @@ class FakeCredentialsChecker(object):
             return defer.succeed("uid")
         else:
             return defer.fail(UnauthorizedLogin())
-
-
-
-class LoginTests(SynchronousTestCase):
-    """
-    Tests for logging in.
-    """
-    def setUp(self):
-        self.store = Store()
-
-        checker = password.CredentialsChecker(store=self.store)
-        self.store.inMemoryPowerUp(checker, ICredentialsChecker)
-
-        self.locator = password.Locator(self.store)
-
-
-    def _login(self, username, password):
-        """
-        Log in.
-        """
-        args = username, password, None
-        return defer.maybeDeferred(self.locator.login, *args)
-
-
-    def test_success(self):
-        """
-        Can log in with correct username and password.
-        """
-        d = self._login(u"username", u"password")
-        return d
-
-
-    def test_badUser(self):
-        """
-        Can't log in as a user that doesn't exist.
-        """
-        d = self._login(u"BOGUS", u"BOGUS")
-        self.assertFailure(d, errors.BadCredentials)
-        return d
-
-
-    def test_wrongPassword(self):
-        """
-        Can't log in with wrong password.
-        """
-        d = self._login(u"username", u"BOGUS")
-        self.assertFailure(d, errors.BadCredentials)
-        return d
