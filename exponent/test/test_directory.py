@@ -6,11 +6,11 @@ from exponent import directory, exceptions
 from twisted.trial import unittest
 
 
-class NonLockingWriteLockTests(unittest.TestCase):
+class LocalWriteLockTests(unittest.TestCase):
     def setUp(self):
         rootStore = store.Store(self.mktemp())
         store.Store(rootStore.filesdir.child("xyzzy"))
-        self.directory = directory.FakeWriteLockDirectory(store=rootStore)
+        self.directory = directory.LocalWriteLockDirectory(store=rootStore)
 
 
     def test_implementsDirectoryInterface(self):
@@ -19,22 +19,22 @@ class NonLockingWriteLockTests(unittest.TestCase):
         the directory under test provides it.
         """
         IWLD = directory.IWriteLockDirectory
-        self.assertTrue(IWLD.implementedBy(directory.FakeWriteLockDirectory))
+        self.assertTrue(IWLD.implementedBy(directory.LocalWriteLockDirectory))
         self.assertTrue(IWLD.providedBy(self.directory))
 
 
     def test_implementsLockInterface(self):
-        """
-        The lock class implements the ``IWriteLock`` interface.
+        """The lock class implements the ``IWriteLock`` interface.
+
         """
         IWL = directory.IWriteLock
-        self.assertTrue(IWL.implementedBy(directory.FakeWriteLock))
+        self.assertTrue(IWL.implementedBy(directory.LocalWriteLock))
 
 
     def test_acquireWriteAndRelease(self):
-        """
-        Attempts to acquire a write lock on a store. Attempts to write using
-        the lock, and then finally releases the lock.
+        """A user can acquire a lock, then write using it, and then release
+        the lock.
+
         """
         lock = self.successResultOf(self.directory.acquire(["xyzzy"]))
         self.assertTrue(directory.IWriteLock.providedBy(lock))
@@ -42,8 +42,8 @@ class NonLockingWriteLockTests(unittest.TestCase):
 
 
     def test_multipleRelease(self):
-        """
-        Attempts to release the same lock multiple times.
+        """Attempting to release the same lock multiple times fails.
+
         """
         lock = self.successResultOf(self.directory.acquire(["xyzzy"]))
         self.assertEqual(self.successResultOf(lock.release()), None)
@@ -52,8 +52,8 @@ class NonLockingWriteLockTests(unittest.TestCase):
 
 
     def test_doesNotExist(self):
-        """
-        Attempts to acquire a store that doesn't exist.
+        """Attempting to acquire a store that doesn't exist fails.
+
         """
         d = self.directory.acquire(["DOES", "NOT", "EXIST"])
         self.failureResultOf(d).trap(exceptions.NoSuchStoreException)

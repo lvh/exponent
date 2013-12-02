@@ -61,9 +61,10 @@ class AlreadyReleasedException(Exception):
 
 
 @interface.implementer(IWriteLockDirectory)
-class FakeWriteLockDirectory(item.Item):
-    """
-    A fake write lock directory, suitable for a single server.
+class LocalWriteLockDirectory(item.Item):
+    """A local, filesystem-based write lock directory, suitable for a
+    single server.
+
     """
     _dummy = attributes.boolean()
 
@@ -71,15 +72,15 @@ class FakeWriteLockDirectory(item.Item):
         storePath = self.store.filesdir.descendant(pathSegments)
         if not storePath.exists():
             return defer.fail(exceptions.NoSuchStoreException())
-        lock = FakeWriteLock(store.Store(storePath))
+        lock = LocalWriteLock(store.Store(storePath))
         return defer.succeed(lock)
 
 
 
 @interface.implementer(IWriteLock)
-class FakeWriteLock(object):
+class LocalWriteLock(object):
     """
-    A fake write lock.
+    A local write lock.
     """
     def __init__(self, lockedStore):
         self.store = lockedStore
@@ -88,7 +89,7 @@ class FakeWriteLock(object):
 
     def write(self):
         """
-        Pretends to write the store.
+        Pretends to write the long-term storage.
 
         :returns: A deferred fired with C{None}.
         :rtype: deferred ``None``
