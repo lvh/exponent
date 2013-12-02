@@ -8,18 +8,19 @@ from txampext import commandtests
 
 
 class RequestSesssionTests(unittest.TestCase, commandtests.CommandTestMixin):
-    """
-    Tests for the AMP command to request a session identifier.
+    """Tests for the AMP command to request a session identifier.
+
     """
     command = session.RequestSession
     argumentObjects = argumentStrings = {}
     responseObjects = responseStrings = {"sessionIdentifier": "sid"}
+    errors = fatalErrors = {}
 
 
 
 class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
-    """
-    Tests for the session-based login AMP command.
+    """Tests for the session-based login AMP command.
+
     """
     command = session.LoginWithSession
     argumentObjects = argumentStrings = {
@@ -29,6 +30,7 @@ class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
     responseObjects = responseStrings = {
         "sessionIdentifier": "newsid"
     }
+    errors = fatalErrors = {}
 
 
 
