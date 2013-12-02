@@ -1,7 +1,7 @@
 """
 Tests for common authentication infrastructure.
 """
-from axiom import attributes, errors, item, scheduler, store
+from axiom import errors, scheduler, store
 from epsilon import extime
 from exponent.auth import common
 from inspect import getargspec
@@ -270,7 +270,7 @@ class TokenCounterTests(unittest.TestCase):
         with a valid token.
         """
         self._assertAccepts([self.token.identifier])
-        
+
 
     def test_acceptMultipleTokens(self):
         """
