@@ -28,8 +28,9 @@ project, so they've been coalesced here.
 
 Features:
 
-- Locators
-- Filesystem-based long-term storage
+- AMP command locators
+- Long-term substore storage on a filesystem
 - In-memory write lock (directory) for long-term storage
-- Basic authentication framework; token-based, so multi-factor auth ready
+- Basic authentication framework (multi-factor auth ready)
+- Password based authentication classes
 - Rudimentary tutorial
