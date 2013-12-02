@@ -35,8 +35,8 @@ class LoginSessionTests(unittest.TestCase, commandtests.CommandTestMixin):
 
 
 class LoginTests(unittest.TestCase):
-    """
-    Tests for authenticating using sessions.
+    """Tests for authenticating using sessions.
+
     """
     def setUp(self):
         self.store = store.Store()
@@ -46,14 +46,14 @@ class LoginTests(unittest.TestCase):
 
 
     def _login(self, userIdentifier=None, sessionIdentifier=None):
-        """
-        Attempts to authenticate as the user using a session.
+        """Attempts to authenticate as the user using a session.
 
         :param userIdentifier: The user identifier to use. If unspecified or
             or ``None``, uses the test user identifier.
         :param sessionIdentifier: The session identifier to use. If
             unspecified, uses the first valid session identifier for the
             current user.
+
         """
         if userIdentifier is None:
             userIdentifier = self.user.identifier
@@ -64,15 +64,15 @@ class LoginTests(unittest.TestCase):
 
 
     def _getCurrentIdentifier(self):
-        """
-        Returns the current identifier, as a string.
+        """Returns the current identifier, as a string.
+
         """
         return self.user.store.findUnique(session._Session).identifier
 
 
     def test_cantLoginWithInvalidSessionIdentifier(self):
-        """
-        Tests that users can not log in with an invalid session identifier.
+        """Users can not log in with an invalid session identifier.
+
         """
         d = self._login(self.user.uid, "BOGUS")
         self.assertFailure(d, errors.BadCredentials)
@@ -80,8 +80,8 @@ class LoginTests(unittest.TestCase):
 
 
     def test_cantLoginWithInvalidUserIdentifier(self):
-        """
-        Tests that users can not log in with an invalid user identifier.
+        """Users can not log in with an invalid user identifier.
+
         """
         d = self._login("BOGUS", self._getCurrentIdentifier())
         self.assertFailure(d, errors.BadCredentials)
@@ -89,8 +89,8 @@ class LoginTests(unittest.TestCase):
 
 
     def test_cantLoginTwiceWithSameSessionIdentfiier(self):
-        """
-        Tests that session identifiers are invalidated after single use.
+        """Session identifiers are invalidated after a single use.
+
         """
         oldIdentifier = self._getCurrentIdentifier()
         d = self._login(self.user.uid, oldIdentifier)
