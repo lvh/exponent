@@ -32,7 +32,6 @@ setup(name=packageName,
 
       packages=["exponent", "exponent.test"],
       test_suite="exponent.test",
-      setup_requires=['tox'],
       cmdclass={'test': Tox},
       zip_safe=True,
 
