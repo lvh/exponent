@@ -11,6 +11,7 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import UsernamePassword, IUsernameHashedPassword
 from twisted.internet import defer
 from twisted.trial.unittest import SynchronousTestCase
+from txampext.respondertests import ResponderTestMixin
 from zope.interface import implementer
 
 
@@ -111,3 +112,15 @@ class FakeCredentialsChecker(object):
             return defer.succeed("uid")
         else:
             return defer.fail(UnauthorizedLogin())
+
+
+
+class AuthenticationLocatorTests(SynchronousTestCase, ResponderTestMixin):
+    command = password.AuthenticateWithPassword
+    locator = password.PasswordAuthenticationLocator(Store())
+
+
+
+class PasswordLocatorTests(SynchronousTestCase, ResponderTestMixin):
+    command = password.SetPassword
+    locator = password.PasswordLocator(Store())

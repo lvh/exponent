@@ -85,6 +85,7 @@ class PasswordAuthenticationLocator(AuthenticationLocator):
         :rtype: deferred ``{"token": token}``
 
         """
+        raise NotImplementedError()
 
 
 
@@ -104,6 +105,7 @@ class PasswordLocator(locators.Locator):
     """A locator for password commands for logged-in users.
 
     """
+    @SetPassword.responder
     def setPassword(self, password):
         """Sets the current user's password to the given value.
 
@@ -112,3 +114,4 @@ class PasswordLocator(locators.Locator):
         :rtype: deferred ``{}``
 
         """
+        raise NotImplementedError()
