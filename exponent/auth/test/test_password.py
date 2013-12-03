@@ -2,7 +2,7 @@
 Tests for password-related authentication functionality.
 """
 from axiom.store import Store
-from exponent.auth import common, errors, password
+from exponent.auth import common, password
 from exponent.directory import IWriteLockDirectory, LocalWriteLock
 from exponent.exceptions import NoSuchStoreException
 from exponent._util import synchronous
