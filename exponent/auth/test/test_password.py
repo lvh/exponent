@@ -103,27 +103,6 @@ class FakeUsernameHashedPassword(object):
 
 
 
-class _ResponderTestMixin(object):
-    command = None
-    """The command.
-
-    """
-
-    responderName = None
-    """The name of the responder function.
-
-    """
-
-    def test_locateResponder(self):
-        """Compares the located responder to the expected responder.
-
-        """
-        found = self.locator.locateResponder(self.command.__name__)
-        expected = getattr(self.locator, self.responderName).im_func
-        self.assertEqual(found, expected)
-
-
-
 class FakeCredentialsChecker(object):
     credentialInterfaces = [IUsernameHashedPassword]
 
