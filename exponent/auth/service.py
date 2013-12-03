@@ -9,16 +9,16 @@ class AuthenticationLocator(amp.CommandLocator):
     """
     credentialInterfaces = []
 
-    def __init__(self, store):
+    def __init__(self, rootStore):
         """
         Initializes an authentication responder locator.
 
-        :param store: The root store.
+        :param rootStore: The root store.
         """
-        self.store = store
+        self.rootStore = rootStore
 
-        storeCheckers = store.powerupsFor(checkers.ICredentialsChecker)
-        self.portal = portal.Portal(Realm(store), storeCheckers)
+        storeCheckers = rootStore.powerupsFor(checkers.ICredentialsChecker)
+        self.portal = portal.Portal(Realm(rootStore), storeCheckers)
 
 
 
@@ -27,8 +27,8 @@ class Realm(object):
     """
     A realm that produces box receivers for users.
     """
-    def __init__(self, getUserByUid):
-        self._getUser = getUserByUid
+    def __init__(self, rootStore):
+        self.rootStore = rootStore
 
 
     def requestAvatar(self, uid, mind, *interfaces):
