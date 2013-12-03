@@ -21,19 +21,6 @@ class AuthenticationLocator(amp.CommandLocator):
         self.portal = portal.Portal(Realm(store), storeCheckers)
 
 
-    def acquireStore(self, userIdentifier):
-        """
-        Acquires a user store.
-
-        :param userIdentifier: The user identifier for which to retrieve the
-            store.
-        :type userIdentifier: ``str``
-        :raises BadCredentials: The user identifier was unknown.
-        :return: A deferred reference to the user's store.
-        :rtype: ``Deferred axiom.store.Store``
-        """
-
-
 
 @interface.implementer(portal.IRealm)
 class Realm(object):
