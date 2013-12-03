@@ -104,6 +104,7 @@ class FakeUsernameHashedPassword(object):
 
 
 
+@implementer(ICredentialsChecker)
 class FakeCredentialsChecker(object):
     credentialInterfaces = [IUsernameHashedPassword]
 
