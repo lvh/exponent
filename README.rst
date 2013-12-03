@@ -32,5 +32,6 @@ Features:
 - Long-term substore storage on a filesystem
 - In-memory write lock (directory) for long-term storage
 - Basic authentication framework (multi-factor auth ready)
-- Password based authentication classes
+- Password-based authentication support
+- Session-based authentication support
 - Rudimentary tutorial
