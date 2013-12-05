@@ -17,6 +17,9 @@ class Options(usage.Options):
     ]
 
     def postParameters(self):
+        """Verify that a store was passed.
+
+        """
         if self["store"] is None:
             raise usage.UsageError("Passing a root store is mandatory.")
 
